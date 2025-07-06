@@ -32,6 +32,7 @@ export const getCurrentUser = createAsyncThunk(
       const user = await authApi.getCurrentUser(token);
       return user;
     } catch (e) {
+      console.log(e);
       return rejectWithValue("Failed to fetch user");
     }
   }

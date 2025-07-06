@@ -1,5 +1,6 @@
 // src/api/user.js
-const BASE_URL = "https://dietly-backend.onrender.com/api/v1";
+const BASE_URL =
+  import.meta.env.VITE_API_BASE_URL
 
 export async function getUser(token) {
   const res = await fetch(`${BASE_URL}/users/me`, {

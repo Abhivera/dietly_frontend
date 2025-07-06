@@ -1,5 +1,5 @@
 // src/api/images.js
-const BASE_URL = "https://dietly-backend.onrender.com/api/v1";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL
 
 export async function uploadAndAnalyzeImage(token, file) {
   const formData = new FormData();
