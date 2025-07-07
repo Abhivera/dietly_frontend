@@ -63,7 +63,7 @@ export async function getCurrentUser(token) {
   return res.json();
 }
 
-export async function verifyEmail(token) {
-  const res = await fetch(`${BASE_URL}/auth/verify-email?token=${token}`);
+export async function verifyEmail(querytoken) {
+  const res = await fetch(`${BASE_URL}/auth/verify-email?token=${querytoken}`);
   return res.json();
 }

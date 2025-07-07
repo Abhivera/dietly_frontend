@@ -19,14 +19,21 @@ import {
   Sparkles,
   BarChart3,
   User,
+  Calendar,
+  History,
+  Trophy,
+  Heart,
+  Shield,
+  Users,
 } from "lucide-react";
 
-const Index = () => {
+const Home = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rateLimit, setRateLimit] = useState(null);
+  const [description, setDescription] = useState("");
 
   const showToast = (message, type = "info") => {
     // Simple toast notification
@@ -71,6 +78,7 @@ const Index = () => {
     try {
       const formData = new FormData();
       formData.append("file", selectedImage);
+      formData.append("description", description); // send description
 
       const response = await fetch(
         "https://dietly-backend.onrender.com/api/v1/public/analyze-food",
@@ -105,53 +113,15 @@ const Index = () => {
     setSelectedImage(null);
     setImagePreview(null);
     setAnalysis(null);
+    setDescription(""); // clear description
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-sm border-b border-emerald-100 sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <img
-                src="https://myabhibucket30june2025.s3.ap-south-1.amazonaws.com/default_media/dietly_logo.png"
-                alt="Dietly Logo"
-                className="w-8 h-8 rounded-lg object-contain"
-              />
-            </div>
-            <div className="flex items-center gap-4">
-              <Button
-                asChild
-                variant="ghost"
-                className="text-gray-600 hover:text-emerald-600"
-              >
-                <a href="/about">About</a>
-              </Button>
-              <Button
-                asChild
-                variant="ghost"
-                className="text-gray-600 hover:text-emerald-600"
-              >
-                <a href="/features">Features</a>
-              </Button>
-              <Button
-                asChild
-                className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
-              >
-                <a href="/login">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </a>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12">
+        <div className="text-center mb-12 hidden sm:block">
           <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-pulse">
             <Zap className="w-4 h-4" />
             AI-Powered Food Analysis
@@ -159,50 +129,32 @@ const Index = () => {
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-6">
             Welcome to Dietly
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8 leading-relaxed">
-            Analyze your meals instantly with AI, track calories automatically,
-            and get personalized exercise recommendations. Simply snap a photo
-            and let our AI do the rest.
-            <br />
+          <p className="text-xl text-gray-600 max-w-2xl sm:max-w-3xl mx-auto mb-8 leading-relaxed">
+            Snap a photo, get instant nutrition insights, and track your health
+            journey.{" "}
             <span className="font-semibold text-emerald-700">
-              Track your nutrition, calories, and meals daily
-            </span>
-            —and view your{" "}
-            <span className="font-semibold text-emerald-700">
-              weekly, monthly, and yearly fitness summaries
+              Daily meal tracking with comprehensive reports
             </span>{" "}
-            to stay on top of your health journey.
+            —see your progress over time.
           </p>
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
-            <Badge
-              variant="secondary"
-              className="bg-emerald-100 text-emerald-800 px-4 py-2"
-            >
-              🍎 Food Recognition
+
+          <div className="flex flex-wrap justify-center gap-4 mb-4">
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
+              🍎 Instant Recognition
             </Badge>
-            <Badge
-              variant="secondary"
-              className="bg-blue-100 text-blue-800 px-4 py-2"
-            >
-              📊 Nutrition & Calorie Tracking
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
+              📊 Smart Tracking
             </Badge>
-            <Badge
-              variant="secondary"
-              className="bg-purple-100 text-purple-800 px-4 py-2"
-            >
-              🏃‍♂️ Exercise Recommendations
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
+              🏃‍♂️ Workout Plans
             </Badge>
-            <Badge
-              variant="secondary"
-              className="bg-green-100 text-green-800 px-4 py-2"
-            >
-              📅 Daily, Weekly, Monthly, Yearly Summaries
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
+              📈 Progress Reports
             </Badge>
           </div>
         </div>
 
-        {/* Main Analysis Card */}
-        <Card className="max-w-4xl mx-auto shadow-2xl border-0 bg-white/70 backdrop-blur-sm hover:shadow-3xl transition-all duration-300">
+        <Card className="max-w-4xl mx-auto bg-transparent border-none shadow-none rounded-none">
           <CardHeader className="text-center pb-8">
             <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
               <Camera className="w-6 h-6 text-emerald-600" />
@@ -216,7 +168,7 @@ const Index = () => {
           <CardContent className="space-y-8">
             {/* Image Upload Section */}
             {!imagePreview ? (
-              <div className="border-2 border-dashed border-emerald-300 rounded-xl p-12 text-center bg-gradient-to-br from-emerald-50/50 to-teal-50/50 hover:from-emerald-50 hover:to-teal-50 transition-all duration-300 hover:scale-[1.02]">
+              <div className="border-2 border-dashed border-emerald-300 rounded-xl p-12 text-center bg-transparent hover:scale-[1.02] transition-all duration-300">
                 <input
                   type="file"
                   accept="image/*"
@@ -226,7 +178,7 @@ const Index = () => {
                 />
                 <label htmlFor="image-upload" className="cursor-pointer">
                   <div className="flex flex-col items-center gap-4">
-                    <div className="w-20 h-20 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full flex items-center justify-center shadow-lg">
+                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
                       <Camera className="w-10 h-10 text-emerald-600" />
                     </div>
                     <div>
@@ -249,7 +201,7 @@ const Index = () => {
                   <img
                     src={imagePreview}
                     alt="Selected food"
-                    className="w-full max-w-md mx-auto rounded-xl shadow-lg group-hover:shadow-xl transition-shadow duration-300"
+                    className="w-full max-w-md mx-auto rounded-xl"
                   />
                   <Button
                     variant="destructive"
@@ -261,13 +213,23 @@ const Index = () => {
                   </Button>
                 </div>
 
+                <div className="text-center">
+                  <input
+                    type="text"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Optional: Add a description for the image (e.g. '5 samosas and chutney')"
+                    className="w-full max-w-md mx-auto mt-2 px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-700 bg-white"
+                  />
+                </div>
+
                 {!analysis && (
                   <div className="text-center">
                     <Button
                       onClick={analyzeFood}
                       disabled={isAnalyzing}
                       size="lg"
-                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                      className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-xl font-semibold"
                     >
                       {isAnalyzing ? (
                         <>
@@ -294,7 +256,7 @@ const Index = () => {
                 {analysis.is_food ? (
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Food Items & Description */}
-                    <Card className="border border-emerald-200 bg-gradient-to-br from-emerald-50/50 to-emerald-50/30 hover:shadow-lg transition-all duration-300">
+                    <Card className="bg-transparent border-none shadow-none rounded-none">
                       <CardHeader>
                         <CardTitle className="text-lg text-emerald-800 flex items-center gap-2">
                           <Target className="w-5 h-5" />
@@ -307,7 +269,7 @@ const Index = () => {
                             <Badge
                               key={index}
                               variant="secondary"
-                              className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 transition-colors"
+                              className="bg-emerald-100 text-emerald-800 hover:bg-emerald-200"
                             >
                               {item}
                             </Badge>
@@ -326,7 +288,7 @@ const Index = () => {
                     </Card>
 
                     {/* Nutrition Facts */}
-                    <Card className="border border-blue-200 bg-gradient-to-br from-blue-50/50 to-blue-50/30 hover:shadow-lg transition-all duration-300">
+                    <Card className="bg-transparent border-none shadow-none rounded-none">
                       <CardHeader>
                         <CardTitle className="text-lg text-blue-800 flex items-center gap-2">
                           <BarChart3 className="w-5 h-5" />
@@ -341,25 +303,25 @@ const Index = () => {
                           </span>
                         </div>
                         <div className="grid grid-cols-2 gap-3">
-                          <div className="text-center p-3 bg-white/80 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-center p-3 rounded-lg">
                             <div className="font-semibold text-gray-800 text-lg">
                               {analysis.nutrients.protein}g
                             </div>
                             <div className="text-sm text-gray-600">Protein</div>
                           </div>
-                          <div className="text-center p-3 bg-white/80 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-center p-3 rounded-lg">
                             <div className="font-semibold text-gray-800 text-lg">
                               {analysis.nutrients.carbs}g
                             </div>
                             <div className="text-sm text-gray-600">Carbs</div>
                           </div>
-                          <div className="text-center p-3 bg-white/80 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-center p-3 rounded-lg">
                             <div className="font-semibold text-gray-800 text-lg">
                               {analysis.nutrients.fat}g
                             </div>
                             <div className="text-sm text-gray-600">Fat</div>
                           </div>
-                          <div className="text-center p-3 bg-white/80 rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                          <div className="text-center p-3 rounded-lg">
                             <div className="font-semibold text-gray-800 text-lg">
                               {analysis.nutrients.sugar}g
                             </div>
@@ -370,7 +332,7 @@ const Index = () => {
                     </Card>
 
                     {/* Exercise Recommendations */}
-                    <Card className="border border-purple-200 bg-gradient-to-br from-purple-50/50 to-purple-50/30 md:col-span-2 hover:shadow-lg transition-all duration-300">
+                    <Card className="bg-transparent border-none shadow-none rounded-none md:col-span-2">
                       <CardHeader>
                         <CardTitle className="text-lg text-purple-800 flex items-center gap-2">
                           <Clock className="w-5 h-5" />
@@ -379,7 +341,7 @@ const Index = () => {
                       </CardHeader>
                       <CardContent>
                         <div className="flex flex-wrap gap-6 justify-center">
-                          <div className="flex-1 min-w-[200px] p-6 bg-white/80 rounded-lg shadow-sm hover:shadow-md transition-all text-center">
+                          <div className="flex-1 min-w-[200px] text-center">
                             <div className="text-3xl font-bold text-purple-800 mb-2">
                               {analysis.exercise_recommendations.steps}
                             </div>
@@ -387,7 +349,7 @@ const Index = () => {
                               Steps to burn these calories
                             </div>
                           </div>
-                          <div className="flex-1 min-w-[200px] p-6 bg-white/80 rounded-lg shadow-sm hover:shadow-md transition-all text-center">
+                          <div className="flex-1 min-w-[200px] text-center">
                             <div className="text-3xl font-bold text-purple-800 mb-2">
                               {analysis.exercise_recommendations.walking_km} km
                             </div>
@@ -400,7 +362,7 @@ const Index = () => {
                     </Card>
                   </div>
                 ) : (
-                  <Card className="border border-red-200 bg-gradient-to-br from-red-50 to-red-50/50">
+                  <Card className="bg-transparent border-none shadow-none rounded-none">
                     <CardContent className="text-center py-8">
                       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Camera className="w-8 h-8 text-red-600" />
@@ -415,9 +377,8 @@ const Index = () => {
                   </Card>
                 )}
 
-                {/* Rate Limit Info */}
                 {rateLimit && (
-                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-center p-4">
                     <div className="text-sm text-gray-600">
                       <span className="font-semibold text-emerald-600">
                         {rateLimit.remaining_requests}
@@ -436,93 +397,158 @@ const Index = () => {
         </Card>
 
         {/* Login CTA */}
-        <Card className="max-w-4xl mx-auto mt-8 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 text-white border-0 shadow-2xl overflow-hidden relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/20 to-teal-600/20 animate-pulse"></div>
-          <CardContent className="text-center py-12 relative z-10">
-            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
-              <User className="w-8 h-8 text-white" />
+        <div className="w-full mt-6 bg-emerald-50 text-emerald-700 px-4 sm:px-8 py-6">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <User className="w-8 h-8 text-emerald-700" />
             </div>
+
             <h3 className="text-3xl font-bold mb-4">
-              Ready to Track Your Journey?
+              Ready to Transform Your Health?
             </h3>
-            <p className="text-emerald-100 mb-8 max-w-2xl mx-auto text-lg leading-relaxed">
-              Create your free account to save meal history, track daily
-              calories, set goals, and get personalized nutrition insights. Join
-              thousands of users already transforming their eating habits!
+
+            <p className="text-emerald-600 mb-8 mx-auto text-lg leading-relaxed whitespace-nowrap">
+              Join thousands of users already tracking their nutrition with AI.
+              Save your meal history,
             </p>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
                 asChild
                 size="lg"
                 variant="secondary"
-                className="bg-white text-emerald-600 hover:bg-gray-100 font-semibold px-8 py-4 rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+                className="bg-emerald-600 text-white hover:bg-emerald-700 font-semibold px-8 py-4 rounded-xl transition-all transform hover:scale-105"
               >
                 <a href="/register">
                   <User className="w-5 h-5 mr-2" />
                   Sign Up for Free
                 </a>
               </Button>
-              {/* <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 font-semibold px-8 py-4 rounded-xl"
-              >
-                Learn More
-              </Button> */}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Features Grid */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20">
-          <Card className="text-center border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <CardContent className="pt-8 pb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Camera className="w-8 h-8 text-emerald-600" />
-              </div>
-              <h3 className="font-bold text-gray-800 mb-3 text-lg">
-                AI Food Recognition
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Advanced computer vision identifies ingredients and dishes from
-                photos with 95%+ accuracy
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <CardContent className="pt-8 pb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <TrendingUp className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="font-bold text-gray-800 mb-3 text-lg">
-                Nutrition & Calorie Tracking
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Track your daily meals, calories, and nutrients. Get insights
-                and summaries for each day, week, month, and year to monitor
-                your progress and stay motivated.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-            <CardContent className="pt-8 pb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-                <Clock className="w-8 h-8 text-purple-600" />
-              </div>
-              <h3 className="font-bold text-gray-800 mb-3 text-lg">
-                Exercise Recommendations
-              </h3>
-              <p className="text-gray-600 text-sm leading-relaxed">
-                Personalized workout suggestions to help you balance calorie
-                intake with physical activity
-              </p>
-            </CardContent>
-          </Card>
+          </div>
         </div>
 
-        {/* Footer */}
+        {/* Features Section  */}
+
+        <div className="mt-2 bg-white bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+          <div className="text-center pb-8 pt-12">
+            <h2 className="text-4xl font-bold mb-4">Why Choose Dietly?</h2>
+            <p className="text-emerald-400 text-lg mx-auto px-4 sm:px-8 whitespace-nowrap">
+              Smart nutrition tracking with AI-powered insights and
+              comprehensive reporting
+            </p>
+          </div>
+
+          <div className="px-4 sm:px-8 py-2 bg-white text-gray-800">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Feature 1 */}
+              <div className="text-center group">
+                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
+                  <Camera className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Instant Recognition
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Snap any meal and get instant AI analysis of ingredients,
+                  portions, and nutritional content.
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="text-center group">
+                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
+                  <History className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Daily Meal History
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  <span className="font-semibold text-green-600">
+                    Sign In to track
+                  </span>{" "}
+                  every meal, build your personal food database, and never lose
+                  your progress.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="text-center group">
+                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
+                  <TrendingUp className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Smart Reports
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  <span className="font-semibold text-green-600">
+                    Premium feature:
+                  </span>{" "}
+                  Get detailed daily, weekly, monthly, and yearly nutrition
+                  reports with trends.
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="text-center group">
+                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
+                  <Target className="w-10 h-10 text-white" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Personalized Goals
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Set custom calorie targets, track macros, and get exercise
+                  recommendations tailored to your goals.
+                </p>
+              </div>
+            </div>
+
+            {/* Premium Features Highlight */}
+            <div className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 border border-emerald-200">
+              <div className="text-center mb-8">
+                <Trophy className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
+                <h3 className="text-2xl font-bold text-emerald-800 mb-2">
+                  Unlock Your Full Potential
+                </h3>
+                <p className="text-emerald-700">
+                  Sign up now to access advanced tracking and comprehensive
+                  reporting
+                </p>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center p-4 bg-white/80 rounded-xl">
+                  <Calendar className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-gray-800 mb-1">
+                    Daily Tracking
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    Log every meal with automatic calorie counting
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-white/80 rounded-xl">
+                  <BarChart3 className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-gray-800 mb-1">
+                    Progress Analytics
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    Visual charts and trends over time
+                  </p>
+                </div>
+                <div className="text-center p-4 bg-white/80 rounded-xl">
+                  <Heart className="w-8 h-8 text-emerald-600 mx-auto mb-2" />
+                  <h4 className="font-semibold text-gray-800 mb-1">
+                    Health Insights
+                  </h4>
+                  <p className="text-sm text-gray-600">
+                    Personalized recommendations and tips
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <footer className="mt-20 text-center text-gray-500 text-sm">
           <p>© 2025 Dietly. Transforming health and fitness analysis.</p>
         </footer>
@@ -531,4 +557,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Home;

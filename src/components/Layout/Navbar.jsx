@@ -85,7 +85,7 @@ export default function Navbar() {
               <span className="text-blue-600 font-medium text-xs">Login</span>
             </Link>
             <Link
-              to="/register"
+              to="/login"
               className="w-full flex flex-col items-center gap-2 transition-all duration-200 group"
             >
               <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center hover:bg-green-200 transition-colors">
