@@ -163,6 +163,15 @@ const Index = () => {
             Analyze your meals instantly with AI, track calories automatically,
             and get personalized exercise recommendations. Simply snap a photo
             and let our AI do the rest.
+            <br />
+            <span className="font-semibold text-emerald-700">
+              Track your nutrition, calories, and meals daily
+            </span>
+            —and view your{" "}
+            <span className="font-semibold text-emerald-700">
+              weekly, monthly, and yearly fitness summaries
+            </span>{" "}
+            to stay on top of your health journey.
           </p>
           <div className="flex flex-wrap justify-center gap-4 mb-8">
             <Badge
@@ -175,13 +184,19 @@ const Index = () => {
               variant="secondary"
               className="bg-blue-100 text-blue-800 px-4 py-2"
             >
-              📊 Nutrition Analysis
+              📊 Nutrition & Calorie Tracking
             </Badge>
             <Badge
               variant="secondary"
               className="bg-purple-100 text-purple-800 px-4 py-2"
             >
               🏃‍♂️ Exercise Recommendations
+            </Badge>
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 px-4 py-2"
+            >
+              📅 Daily, Weekly, Monthly, Yearly Summaries
             </Badge>
           </div>
         </div>
@@ -481,11 +496,12 @@ const Index = () => {
                 <TrendingUp className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="font-bold text-gray-800 mb-3 text-lg">
-                Nutrition Analysis
+                Nutrition & Calorie Tracking
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Detailed calorie counts and comprehensive macro-nutrient
-                breakdowns for informed eating
+                Track your daily meals, calories, and nutrients. Get insights
+                and summaries for each day, week, month, and year to monitor
+                your progress and stay motivated.
               </p>
             </CardContent>
           </Card>
@@ -508,10 +524,7 @@ const Index = () => {
 
         {/* Footer */}
         <footer className="mt-20 text-center text-gray-500 text-sm">
-          <p>
-            © 2025 Dietly. Transforming health and fitness
-            analysis.
-          </p>
+          <p>© 2025 Dietly. Transforming health and fitness analysis.</p>
         </footer>
       </div>
     </div>

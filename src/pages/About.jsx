@@ -21,6 +21,11 @@ export default function About() {
             <CardDescription className="text-gray-600 mt-2">
               Empowering healthier lives with AI-driven nutrition and fitness
               insights.
+              <br />
+              <span className="font-semibold text-emerald-700">
+                Track your nutrition, calories, and meals daily, and get weekly,
+                monthly, and yearly fitness summaries.
+              </span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -51,6 +56,12 @@ export default function About() {
               provide instant food recognition, detailed nutrition analysis, and
               actionable exercise recommendations—all from a simple photo of
               your meal.
+              <br />
+              <span className="font-semibold text-emerald-700">
+                Track your meals, calories, and nutrition every day, and view
+                your progress with comprehensive weekly, monthly, and yearly
+                summaries.
+              </span>
             </p>
             <div className="grid md:grid-cols-2 gap-6 mt-6">
               <div className="flex flex-col items-center text-center">
@@ -59,7 +70,11 @@ export default function About() {
                 <p className="text-gray-600 text-sm">
                   To inspire and empower people to make better food choices,
                   track their nutrition, and achieve their health goals with
-                  ease.
+                  ease.{" "}
+                  <span className="font-semibold text-emerald-700">
+                    Dietly helps you monitor your daily intake and see your
+                    fitness journey over time with powerful summary tools.
+                  </span>
                 </p>
               </div>
               <div className="flex flex-col items-center text-center">
@@ -68,7 +83,11 @@ export default function About() {
                 <p className="text-gray-600 text-sm">
                   Unlike generic calorie trackers, Dietly uses advanced AI to
                   analyze your actual meals, offering personalized insights and
-                  a supportive community to help you stay motivated.
+                  a supportive community to help you stay motivated.{" "}
+                  <span className="font-semibold text-emerald-700">
+                    Get daily, weekly, monthly, and yearly summaries to
+                    visualize your progress and stay on track.
+                  </span>
                 </p>
               </div>
             </div>

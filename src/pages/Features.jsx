@@ -33,7 +33,7 @@ export default function Features() {
               variant="secondary"
               className="bg-blue-100 text-blue-800 px-4 py-2"
             >
-              Instant Analysis
+              Nutrition & Calorie Tracking
             </Badge>
             <Badge
               variant="secondary"
@@ -41,9 +41,15 @@ export default function Features() {
             >
               Personalized
             </Badge>
+            <Badge
+              variant="secondary"
+              className="bg-green-100 text-green-800 px-4 py-2"
+            >
+              Daily, Weekly, Monthly, Yearly Summaries
+            </Badge>
           </CardContent>
         </Card>
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-4 gap-8">
           <Card className="text-center border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 hover:scale-105 hover:shadow-xl">
             <CardContent className="pt-8 pb-6">
               <div className="w-16 h-16 bg-gradient-to-r from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
@@ -64,11 +70,27 @@ export default function Features() {
                 <TrendingUp className="w-8 h-8 text-blue-600" />
               </div>
               <h3 className="font-bold text-gray-800 mb-3 text-lg">
-                Nutrition Analysis
+                Nutrition & Calorie Tracking
               </h3>
               <p className="text-gray-600 text-sm leading-relaxed">
-                Get detailed calorie counts and macro-nutrient breakdowns for
-                every meal you analyze.
+                Track your daily meals, calories, and nutrients. Stay on top of
+                your health with detailed nutrition analysis and calorie
+                counting.
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="text-center border-0 bg-white/60 backdrop-blur-sm hover:bg-white/80 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+            <CardContent className="pt-8 pb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-green-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Sparkles className="w-8 h-8 text-green-600" />
+              </div>
+              <h3 className="font-bold text-gray-800 mb-3 text-lg">
+                Daily, Weekly, Monthly, Yearly Summaries
+              </h3>
+              <p className="text-gray-600 text-sm leading-relaxed">
+                Get comprehensive summaries of your nutrition, calories, and
+                fitness progress for any time period—daily, weekly, monthly, or
+                yearly.
               </p>
             </CardContent>
           </Card>
