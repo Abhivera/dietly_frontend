@@ -61,7 +61,7 @@ export default function Auth() {
       dispatch(getCurrentUser(token));
       navigate("/");
     }
-    // eslint-disable-next-line
+    
   }, [token, dispatch, navigate]);
 
   const handleLoginSubmit = (values, { setSubmitting }) => {

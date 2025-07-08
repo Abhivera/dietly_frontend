@@ -10,12 +10,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
-  Upload,
+  Trash,
   Camera,
   TrendingUp,
   Target,
   Clock,
-  Zap,
+  Pizza,
   Sparkles,
   BarChart3,
   User,
@@ -23,8 +23,10 @@ import {
   History,
   Trophy,
   Heart,
-  Shield,
-  Users,
+  Apple,
+  BarChart,
+  Dumbbell,
+  LineChart,
 } from "lucide-react";
 
 const Home = () => {
@@ -118,52 +120,46 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50">
-      {/* Navigation */}
       {/* Hero Section */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="text-center mb-12 hidden sm:block">
-          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-pulse">
-            <Zap className="w-4 h-4" />
-            AI-Powered Food Analysis
-          </div>
-          <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-6">
-            Welcome to Dietly
+      <div className="container mx-auto px-4 py-4">
+      <div className="text-center mb-4 sm:mb-4">
+  <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-pulse">
+    <Pizza className="w-4 h-4" />
+    Your Personalised Calorie Tracker
+  </div>
+</div>
+        <div className="text-center mb-8 hidden sm:block">
+      
+          <h1 className="federo-font text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-6">
+            Take control of your health with Dietly
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl sm:max-w-3xl mx-auto mb-8 leading-relaxed">
-            Snap a photo, get instant nutrition insights, and track your health
-            journey.{" "}
-            <span className="font-semibold text-emerald-700">
-              Daily meal tracking with comprehensive reports
-            </span>{" "}
-            —see your progress over time.
+          <p className="text-xl text-gray-600 max-w-2xl sm:max-w-3xl mx-auto mb-6 leading-relaxed">
+            One snap is all it takes to understand your nutrition.
+            <br />
+            <span className="text-gray-600">
+              Track meals, stay consistent, and celebrate your progress every
+              day.
+            </span>
           </p>
 
           <div className="flex flex-wrap justify-center gap-4 mb-4">
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
-              🍎 Instant Recognition
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+              <Apple size={16} /> Instant Recognition
             </Badge>
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
-              📊 Smart Tracking
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+              <BarChart size={16} /> Smart Tracking
             </Badge>
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
-              🏃‍♂️ Workout Plans
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+              <Dumbbell size={16} /> Workout Plans
             </Badge>
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 py-2 shadow-none">
-              📈 Progress Reports
+            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+              <LineChart size={16} /> Progress Reports
             </Badge>
           </div>
         </div>
 
         <Card className="max-w-4xl mx-auto bg-transparent border-none shadow-none rounded-none">
-          <CardHeader className="text-center pb-8">
-            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center justify-center gap-2">
-              <Camera className="w-6 h-6 text-emerald-600" />
-              Food Image Analysis
-            </CardTitle>
-            <CardDescription className="text-gray-600">
-              Upload a photo of your meal to get instant nutritional insights
-            </CardDescription>
-          </CardHeader>
+       
 
           <CardContent className="space-y-8">
             {/* Image Upload Section */}
@@ -183,7 +179,7 @@ const Home = () => {
                     </div>
                     <div>
                       <p className="text-xl font-semibold text-gray-700 mb-2">
-                        Upload Food Image
+                        Upload Food Image for Analysis
                       </p>
                       <p className="text-gray-500 mb-2">
                         Click to select or drag and drop your image here
@@ -197,28 +193,31 @@ const Home = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="relative group">
-                  <img
-                    src={imagePreview}
-                    alt="Selected food"
-                    className="w-full max-w-md mx-auto rounded-xl"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={resetAnalysis}
-                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    Remove
-                  </Button>
-                </div>
+           <div className="relative group w-full max-w-md mx-auto rounded-xl overflow-hidden">
+  <img
+    src={imagePreview}
+    alt="Selected food"
+    className="w-full h-auto object-cover rounded-xl"
+  />
+
+  {/* Overlay with transparent background */}
+  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+    <button
+      onClick={resetAnalysis}
+      className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow-lg transition-colors duration-200"
+    >
+      <Trash size={20} />
+    </button>
+  </div>
+</div>
+
 
                 <div className="text-center">
                   <input
                     type="text"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Optional: Add a description for the image (e.g. '5 samosas and chutney')"
+                    placeholder="Optional : Add a description e.g. 2 chocolates bar "
                     className="w-full max-w-md mx-auto mt-2 px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-700 bg-white"
                   />
                 </div>
@@ -396,14 +395,93 @@ const Home = () => {
           </CardContent>
         </Card>
 
-        {/* Login CTA */}
-        <div className="w-full mt-6 bg-emerald-50 text-emerald-700 px-4 sm:px-8 py-6">
+  
+
+        {/* Features Section  */}
+
+        <div className="mt-2 bg-white bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+          <div className="text-center pb-4 pt-12">
+            <h2 className="federo-font  text-4xl font-bold mb-4">Why Choose Dietly?</h2>
+            <p className="text-emerald-600 text-lg mx-auto px-4 sm:px-8 whitespace-nowrap">
+              Smart nutrition tracking with AI-powered insights and
+              comprehensive reporting
+            </p>
+          </div>
+
+          <div className="px-4 sm:px-8  bg-white text-gray-800">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {/* Feature 1 */}
+              <div className="text-center group p-8 bg-transparent transition-all duration-300">
+                <div className="w-20 h-20 bg-transparent rounded-2xl flex items-center justify-center mx-auto  transition-all duration-300">
+                  <Camera className="w-10 h-10 text-emerald-500 group-hover:text-teal-500 transition-colors duration-300" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Instant Recognition
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Snap any meal and get instant AI analysis of ingredients,
+                  portions, and nutritional content.
+                </p>
+              </div>
+
+              {/* Feature 2 */}
+              <div className="text-center group p-8 bg-transparent transition-all duration-300">
+                <div className="w-20 h-20 bg-transparent rounded-2xl flex items-center justify-center mx-auto  transition-all duration-300">
+                  <History className="w-10 h-10 text-emerald-500 group-hover:text-teal-500 transition-colors duration-300" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Daily Meal History
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  <span className="font-semibold text-green-600">
+                    Sign In to track
+                  </span>{" "}
+                  every meal, build your personal food database, and never lose
+                  your progress.
+                </p>
+              </div>
+
+              {/* Feature 3 */}
+              <div className="text-center group p-8 bg-transparent transition-all duration-300">
+                <div className="w-20 h-20 bg-transparent rounded-2xl flex items-center justify-center mx-auto  transition-all duration-300">
+                  <TrendingUp className="w-10 h-10 text-emerald-500 group-hover:text-teal-500 transition-colors duration-300" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Smart Reports
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  <span className="font-semibold text-green-600">
+                    Premium feature:
+                  </span>{" "}
+                  Get detailed daily, weekly, monthly, and yearly nutrition
+                  reports with trends.
+                </p>
+              </div>
+
+              {/* Feature 4 */}
+              <div className="text-center group p-8 bg-transparent transition-all duration-300">
+                <div className="w-20 h-20 bg-transparent rounded-2xl flex items-center justify-center mx-auto  transition-all duration-300">
+                  <Target className="w-10 h-10 text-emerald-500 group-hover:text-teal-500 transition-colors duration-300" />
+                </div>
+                <h3 className="font-bold text-gray-800 mb-3 text-xl">
+                  Personalized Goals
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Set custom calorie targets, track macros, and get exercise
+                  recommendations tailored to your goals.
+                </p>
+              </div>
+            </div>
+
+            <hr className="border-t-2 border-emerald-600" />
+     {/* Login CTA */}
+     <div className="w-full mt-6  text-emerald-700 px-4 sm:px-8 py-6">
           <div className="text-center">
             <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <User className="w-8 h-8 text-emerald-700" />
             </div>
 
-            <h3 className="text-3xl font-bold mb-4">
+            <h3 className="federo-font text-3xl font-bold mb-4">
               Ready to Transform Your Health?
             </h3>
 
@@ -427,88 +505,11 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-        {/* Features Section  */}
-
-        <div className="mt-2 bg-white bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-          <div className="text-center pb-8 pt-12">
-            <h2 className="text-4xl font-bold mb-4">Why Choose Dietly?</h2>
-            <p className="text-emerald-400 text-lg mx-auto px-4 sm:px-8 whitespace-nowrap">
-              Smart nutrition tracking with AI-powered insights and
-              comprehensive reporting
-            </p>
-          </div>
-
-          <div className="px-4 sm:px-8 py-2 bg-white text-gray-800">
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {/* Feature 1 */}
-              <div className="text-center group">
-                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
-                  <Camera className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-800 mb-3 text-xl">
-                  Instant Recognition
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Snap any meal and get instant AI analysis of ingredients,
-                  portions, and nutritional content.
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="text-center group">
-                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
-                  <History className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-800 mb-3 text-xl">
-                  Daily Meal History
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  <span className="font-semibold text-green-600">
-                    Sign In to track
-                  </span>{" "}
-                  every meal, build your personal food database, and never lose
-                  your progress.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="text-center group">
-                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
-                  <TrendingUp className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-800 mb-3 text-xl">
-                  Smart Reports
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  <span className="font-semibold text-green-600">
-                    Premium feature:
-                  </span>{" "}
-                  Get detailed daily, weekly, monthly, and yearly nutrition
-                  reports with trends.
-                </p>
-              </div>
-
-              {/* Feature 4 */}
-              <div className="text-center group">
-                <div className="w-20 h-20 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl group-hover:shadow-2xl transition-all duration-300 ">
-                  <Target className="w-10 h-10 text-white" />
-                </div>
-                <h3 className="font-bold text-gray-800 mb-3 text-xl">
-                  Personalized Goals
-                </h3>
-                <p className="text-gray-600 leading-relaxed">
-                  Set custom calorie targets, track macros, and get exercise
-                  recommendations tailored to your goals.
-                </p>
-              </div>
-            </div>
-
             {/* Premium Features Highlight */}
             <div className="mt-12 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 border border-emerald-200">
               <div className="text-center mb-8">
                 <Trophy className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
-                <h3 className="text-2xl font-bold text-emerald-800 mb-2">
+                <h3 className="federo-font  text-2xl font-bold text-emerald-800 mb-2">
                   Unlock Your Full Potential
                 </h3>
                 <p className="text-emerald-700">
@@ -548,8 +549,8 @@ const Home = () => {
             </div>
           </div>
         </div>
-
-        <footer className="mt-20 text-center text-gray-500 text-sm">
+ 
+        <footer className="mt-10 text-center text-gray-500 text-sm">
           <p>© 2025 Dietly. Transforming health and fitness analysis.</p>
         </footer>
       </div>
