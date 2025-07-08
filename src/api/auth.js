@@ -1,5 +1,5 @@
 // src/api/auth.js
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export async function register(data) {
   const res = await fetch(`${BASE_URL}/auth/register`, {
@@ -65,5 +65,26 @@ export async function getCurrentUser(token) {
 
 export async function verifyEmail(querytoken) {
   const res = await fetch(`${BASE_URL}/auth/verify-email?token=${querytoken}`);
+  return res.json();
+}
+
+export async function googleLogin() {
+  // This endpoint returns a URL or redirects, so we just fetch the URL
+  const res = await fetch(`${BASE_URL}/auth/google/login`, {
+    method: "GET",
+    credentials: "include",
+  });
+  return res.json();
+}
+
+export async function googleCallback(queryString) {
+  // This endpoint is called after Google redirects back
+  const res = await fetch(
+    `${BASE_URL}/auth/google/callback${queryString || ""}`,
+    {
+      method: "GET",
+      credentials: "include",
+    }
+  );
   return res.json();
 }

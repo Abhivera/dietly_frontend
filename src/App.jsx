@@ -9,6 +9,7 @@ import MealSummary from "./pages/MealSummary";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import VerifyEmail from "./pages/VerifyEmail";
+import GoogleCallback from "./pages/GoogleCallback";
 import { useSelector } from "react-redux";
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="/login" element={<Auth />} />
           <Route path="/register" element={<Auth />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route
             path="/profile"
             element={
