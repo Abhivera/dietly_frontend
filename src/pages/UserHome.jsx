@@ -19,6 +19,7 @@ import {
   Apple,
   Flame,
   Salad,
+  Pizza,
 } from "lucide-react";
 import {
   getAllImages,
@@ -31,11 +32,10 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Switch, FormControlLabel } from "@mui/material";
 
-export default function Images() {
+export default function UserHome() {
   const [file, setFile] = useState(null);
   const [images, setImages] = useState([]);
   const [filteredImages, setFilteredImages] = useState([]);
-  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [description, setDescription] = useState("");
@@ -49,22 +49,26 @@ export default function Images() {
   useEffect(() => {
     if (!token) return;
     setLoading(true);
+    let isCurrent = true;
     getAllImages(token)
       .then((data) => {
+        if (!isCurrent) return;
         setImages(data.images || []);
         setFilteredImages(data.images || []);
-        if (data.images && data.images.length > 0) {
-          setMessage(""); // Clear error if images are loaded
-        } else {
-          setMessage("No images found");
-        }
+        // No toast for empty state, handled by illustration
       })
       .catch(() => {
+        if (!isCurrent) return;
         setImages([]);
         setFilteredImages([]);
-        setMessage("Failed to load images");
+        toast.error("Failed to load images");
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (isCurrent) setLoading(false);
+      });
+    return () => {
+      isCurrent = false;
+    };
   }, [token]);
 
   // Filter and search logic
@@ -138,28 +142,27 @@ export default function Images() {
   const handleUpload = async (e) => {
     e.preventDefault();
     if (!file) {
-      setMessage("Please select a file first");
+      toast.info("Please select a file first");
       return;
     }
     if (!token) {
-      setMessage("You must be logged in to upload images");
+      toast.error("You must be logged in to upload images");
       return;
     }
     try {
       setUploading(true);
-      setMessage("");
       const res = await uploadAndAnalyzeImage(token, file, description);
       if (res && res.image) {
         setImages((prev) => [res.image, ...prev]);
         toast.success("Image uploaded and analyzed successfully!");
       } else {
-        setMessage(res?.message || "Upload failed. Please try again.");
+        toast.error(res?.message || "Upload failed. Please try again.");
       }
       setFile(null);
       setDescription("");
     } catch (error) {
       console.error("Upload error:", error);
-      setMessage("Upload failed. Please try again.");
+      toast.error("Upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -167,7 +170,7 @@ export default function Images() {
 
   const handleDelete = async (id) => {
     if (!token) {
-      setMessage("You must be logged in to delete images");
+      toast.error("You must be logged in to delete images");
       return;
     }
     try {
@@ -176,13 +179,13 @@ export default function Images() {
       toast.success("Image deleted successfully");
     } catch (error) {
       console.error("Delete error:", error);
-      setMessage("Failed to delete image");
+      toast.error("Failed to delete image");
     }
   };
 
   const handleToggleMeal = async (img) => {
     if (!token) {
-      setMessage("You must be logged in to update meal status");
+      toast.error("You must be logged in to update meal status");
       return;
     }
     if (!img.analysis?.is_food) return;
@@ -203,10 +206,10 @@ export default function Images() {
         );
         toast.success(newIsMeal ? "Added to meal" : "Removed from meal");
       } else {
-        setMessage(res?.message || "Failed to update meal status");
+        toast.error(res?.message || "Failed to update meal status");
       }
     } catch {
-      setMessage("Failed to update meal status");
+      toast.error("Failed to update meal status");
     } finally {
       setMealUpdatingId(null);
     }
@@ -295,37 +298,57 @@ export default function Images() {
         pauseOnHover
       />
       <div className="max-w-7xl mx-auto">
+        {/* Welcome Header */}
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-200 to-teal-200 text-emerald-900 px-6 py-3 rounded-full text-base font-semibold mb-6 shadow-lg animate-fade-in-down">
+            <Pizza className="w-6 h-6 animate-bounce" />
+            <span>Your Personalised Calorie Tracker</span>
+          </div>
+          {/* <h1 className="text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-400 bg-clip-text text-transparent mb-4 drop-shadow-lg animate-fade-in-up">
+            Take control of your{" "}
+            <span className="text-emerald-500">health journey</span>
+          </h1>
+          <p className="text-2xl text-gray-700 max-w-2xl mx-auto mb-8 leading-relaxed animate-fade-in-up">
+            One snap is all it takes to understand your nutrition.
+            <br />
+            <span className="text-emerald-600 font-semibold">
+              Track meals, stay consistent, and celebrate your progress every
+              day.
+            </span>
+          </p> */}
+        </div>
         {/* Upload Section */}
         <div className="mb-6">
           {!file ? (
-            <div className="border-2 border-dashed border-emerald-300 rounded-xl p-12 text-center bg-transparent hover:scale-[1.02] transition-all duration-300">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => setFile(e.target.files[0])}
-                className="hidden"
-                id="image-upload"
-                disabled={uploading}
-              />
-              <label htmlFor="image-upload" className="cursor-pointer">
+            <label htmlFor="image-upload" className="block cursor-pointer">
+              <div className="border-4 border-dashed border-emerald-300 rounded-2xl p-14 text-center bg-gradient-to-br from-white to-emerald-50 hover:from-emerald-50 hover:to-white transition-all duration-300 shadow-xl group relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFile(e.target.files[0])}
+                  className="hidden"
+                  id="image-upload"
+                  disabled={uploading}
+                />
                 <div className="flex flex-col items-center gap-4">
-                  <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
-                    <Upload className="w-10 h-10 text-emerald-600" />
+                  <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                    <Upload className="w-12 h-12 text-emerald-600 animate-pulse" />
                   </div>
                   <div>
-                    <p className="text-xl font-semibold text-gray-700 mb-2">
+                    <p className="text-2xl font-bold text-gray-700 mb-2 tracking-tight">
                       Upload Food Image for Analysis
                     </p>
-                    <p className="text-gray-500 mb-2">
-                      Click to select or drag and drop your image here
+                    <p className="text-gray-500 mb-2 text-base">
+                      Click or drag and drop your image here
                     </p>
                     <p className="text-sm text-gray-400">
                       Supports JPG, PNG (max 10MB)
                     </p>
                   </div>
+                  <div className="absolute inset-0 pointer-events-none group-hover:bg-emerald-100/20 transition-colors rounded-2xl" />
                 </div>
-              </label>
-            </div>
+              </div>
+            </label>
           ) : (
             <div className="space-y-6">
               <div className="relative group w-full max-w-md mx-auto rounded-xl overflow-hidden">
@@ -382,16 +405,18 @@ export default function Images() {
             {/* View Mode Toggle */}
             <div className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-emerald-600" />
-              <div className="bg-gray-100 rounded-lg p-1 flex">
+              <div className="bg-gray-100 rounded-lg p-1 flex shadow-inner">
                 {["daily", "weekly", "monthly"].map((mode) => (
                   <button
                     key={mode}
                     onClick={() => setViewMode(mode)}
-                    className={`px-4 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
-                      viewMode === mode
-                        ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm"
-                        : "text-gray-600 hover:text-gray-800"
-                    }`}
+                    className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-400
+                      ${
+                        viewMode === mode
+                          ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow"
+                          : "text-gray-600 hover:text-gray-800 hover:bg-emerald-50"
+                      }
+                    `}
                   >
                     {mode === "daily" && <Clock className="w-4 h-4" />}
                     {mode === "weekly" && <BarChart3 className="w-4 h-4" />}
@@ -402,19 +427,19 @@ export default function Images() {
               </div>
             </div>
             {/* Date Navigation */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-2 py-1 shadow-inner">
               <button
                 onClick={() => navigateDate(-1)}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-colors"
+                className="p-2 rounded-full border border-gray-300 bg-white hover:bg-emerald-100 hover:border-emerald-400 hover:text-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
-              <span className="font-medium text-gray-800 min-w-0 text-center">
+              <span className="font-medium text-gray-800 min-w-0 text-center px-2">
                 {formatDateRange()}
               </span>
               <button
                 onClick={() => navigateDate(1)}
-                className="p-2 rounded-lg border border-gray-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-colors"
+                className="p-2 rounded-full border border-gray-300 bg-white hover:bg-emerald-100 hover:border-emerald-400 hover:text-emerald-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -428,7 +453,7 @@ export default function Images() {
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 border border-gray-200 rounded-full focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white shadow-sm text-gray-700 w-56"
                 />
               </div>
             </div>
@@ -457,77 +482,59 @@ export default function Images() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Eye className="w-6 h-6 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Images</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats.totalImages}
-                </p>
-              </div>
+          <div className="bg-gradient-to-br from-emerald-100 to-white rounded-2xl shadow-lg p-6 border-l-4 border-emerald-500 flex items-center gap-4 animate-fade-in-up">
+            <div className="p-3 bg-emerald-200 rounded-xl flex items-center justify-center">
+              <Eye className="w-7 h-7 text-emerald-700" />
+            </div>
+            <div>
+              <p className="text-base text-gray-600 font-semibold">
+                Total Images
+              </p>
+              <p className="text-3xl font-extrabold text-gray-800 animate-count">
+                {stats.totalImages}
+              </p>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-teal-50 rounded-lg">
-                <Apple className="w-6 h-6 text-teal-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Food Items</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats.foodImages}
-                </p>
-              </div>
+          <div className="bg-gradient-to-br from-teal-100 to-white rounded-2xl shadow-lg p-6 border-l-4 border-teal-500 flex items-center gap-4 animate-fade-in-up delay-100">
+            <div className="p-3 bg-teal-200 rounded-xl flex items-center justify-center">
+              <Apple className="w-7 h-7 text-teal-700" />
+            </div>
+            <div>
+              <p className="text-base text-gray-600 font-semibold">
+                Food Items
+              </p>
+              <p className="text-3xl font-extrabold text-gray-800 animate-count">
+                {stats.foodImages}
+              </p>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-600">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-emerald-100 rounded-lg">
-                <Flame className="w-6 h-6 text-emerald-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Calories</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats.totalCalories}
-                </p>
-              </div>
+          <div className="bg-gradient-to-br from-emerald-200 to-white rounded-2xl shadow-lg p-6 border-l-4 border-emerald-600 flex items-center gap-4 animate-fade-in-up delay-200">
+            <div className="p-3 bg-emerald-300 rounded-xl flex items-center justify-center">
+              <Flame className="w-7 h-7 text-emerald-800" />
+            </div>
+            <div>
+              <p className="text-base text-gray-600 font-semibold">
+                Total Calories
+              </p>
+              <p className="text-3xl font-extrabold text-gray-800 animate-count">
+                {stats.totalCalories}
+              </p>
             </div>
           </div>
-          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-600">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-teal-50 rounded-lg">
-                <Target className="w-6 h-6 text-teal-700" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Avg Calories</p>
-                <p className="text-2xl font-bold text-gray-800">
-                  {stats.avgCalories}
-                </p>
-              </div>
+          <div className="bg-gradient-to-br from-teal-200 to-white rounded-2xl shadow-lg p-6 border-l-4 border-teal-600 flex items-center gap-4 animate-fade-in-up delay-300">
+            <div className="p-3 bg-teal-300 rounded-xl flex items-center justify-center">
+              <Target className="w-7 h-7 text-teal-800" />
+            </div>
+            <div>
+              <p className="text-base text-gray-600 font-semibold">
+                Avg Calories
+              </p>
+              <p className="text-3xl font-extrabold text-gray-800 animate-count">
+                {stats.avgCalories}
+              </p>
             </div>
           </div>
         </div>
-
-        {/* Messages */}
-        {message && filteredImages.length === 0 && (
-          <div
-            className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
-              message.includes("success") || message.includes("uploaded")
-                ? "bg-green-500 bg-opacity-10 border border-green-500 text-green-600"
-                : "bg-red-500 bg-opacity-10 border border-red-500 text-red-600"
-            }`}
-          >
-            {message.includes("success") || message.includes("uploaded") ? (
-              <Zap className="w-5 h-5" />
-            ) : (
-              <Activity className="w-5 h-5" />
-            )}
-            {message}
-          </div>
-        )}
 
         {/* Loading State */}
         {loading && (
@@ -543,7 +550,7 @@ export default function Images() {
             ? filteredImages.map((img) => (
                 <div
                   key={img.id}
-                  className="overflow-hidden hover:shadow-2xl transition-shadow duration-300"
+                  className="overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-emerald-300/60 hover:scale-[1.01] transition-all duration-300 border border-emerald-100 group"
                 >
                   <div className="p-6">
                     <div className="flex flex-col lg:flex-row gap-6">
@@ -551,7 +558,7 @@ export default function Images() {
                         <img
                           src={img.file_url}
                           alt={img.original_filename}
-                          className="w-full lg:w-48 h-48 object-cover rounded-xl shadow-md"
+                          className="w-full lg:w-48 h-auto max-h-48 object-cover rounded-xl shadow-md border-2 border-emerald-100 group-hover:border-emerald-300 transition-all duration-300"
                         />
                       </div>
                       <div className="flex-1 space-y-4">
@@ -565,6 +572,7 @@ export default function Images() {
                             onConfirm={() => handleDelete(img.id)}
                             okText="Yes"
                             cancelText="No"
+                            placement="topRight"
                           >
                             <button className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-100 transition-colors">
                               <Trash2 className="w-5 h-5" />
@@ -659,24 +667,35 @@ export default function Images() {
                                 <button
                                   onClick={() => handleToggleMeal(img)}
                                   disabled={mealUpdatingId === img.id}
-                                  className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400
-                                    ${
-                                      img.analysis.is_meal
-                                        ? "bg-red-100 text-red-700 hover:bg-red-200"
-                                        : "bg-emerald-600 text-white hover:bg-emerald-700"
-                                    }
-                                    ${
-                                      mealUpdatingId === img.id
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                    }
-                                  `}
+                                  className={`px-5 py-2 rounded-full font-bold transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400 flex items-center gap-2
+                            ${
+                              img.analysis.is_meal
+                                ? "bg-red-100 text-red-700 hover:bg-red-200 border border-red-200"
+                                : "bg-emerald-600 text-white hover:bg-emerald-700 border border-emerald-600"
+                            }
+                            ${
+                              mealUpdatingId === img.id
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }
+                          `}
                                 >
-                                  {mealUpdatingId === img.id
-                                    ? "Updating..."
-                                    : img.analysis.is_meal
-                                    ? "Remove from Meal"
-                                    : "Add to Meal"}
+                                  {mealUpdatingId === img.id ? (
+                                    <span className="flex items-center gap-2">
+                                      <Activity className="w-4 h-4 animate-spin" />
+                                      Updating...
+                                    </span>
+                                  ) : img.analysis.is_meal ? (
+                                    <span className="flex items-center gap-2">
+                                      <Salad className="w-4 h-4" />
+                                      Remove from Meal
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center gap-2">
+                                      <Salad className="w-4 h-4" />
+                                      Add to Meal
+                                    </span>
+                                  )}
                                 </button>
                               </div>
                             )}
@@ -703,7 +722,7 @@ export default function Images() {
                     No images found
                   </h3>
                   <p className="text-gray-600">
-                    Upload your first food image to get started with AI-powered
+                    Upload your first food image to get started with AI-powered calorie and 
                     nutrition analysis!
                   </p>
                 </div>

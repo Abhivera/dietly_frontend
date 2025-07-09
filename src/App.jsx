@@ -4,7 +4,6 @@ import PublicNavbar from "./components/Layout/PublicNavbar";
 import ProtectedRoute from "./components/Layout/ProtectedRoute";
 import Auth from "./pages/Auth";
 import Profile from "./pages/Profile";
-import Images from "./pages/Images";
 import MealSummary from "./pages/MealSummary";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
@@ -36,14 +35,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/images"
-            element={
-              <ProtectedRoute>
-                <Images />
-              </ProtectedRoute>
-            }
-          />
+      
           <Route
             path="/meal-summary"
             element={
