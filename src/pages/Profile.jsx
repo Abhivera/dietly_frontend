@@ -128,7 +128,10 @@ export default function Profile() {
       {/* User Avatar */}
       <div className="flex justify-center mb-6">
         <img
-          src={user.avatar_url}
+          src={
+            user.avatar_url ||
+            "https://myabhibucket30june2025.s3.ap-south-1.amazonaws.com/default_media/default_avatar.png"
+          }
           alt="User Avatar"
           className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
         />
@@ -138,19 +141,33 @@ export default function Profile() {
       {!isEditing ? (
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
-            <div className="mt-1 p-2 bg-gray-50 rounded border">{user.full_name}</div>
+            <label className="block text-sm font-medium text-gray-700">
+              Full Name
+            </label>
+            <div className="mt-1 p-2 bg-gray-50 rounded border">
+              {user.full_name}
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Email</label>
-            <div className="mt-1 p-2 bg-gray-50 rounded border">{user.email}</div>
+            <label className="block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <div className="mt-1 p-2 bg-gray-50 rounded border">
+              {user.email}
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Username</label>
-            <div className="mt-1 p-2 bg-gray-50 rounded border">{user.username}</div>
+            <label className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <div className="mt-1 p-2 bg-gray-50 rounded border">
+              {user.username}
+            </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Member Since</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Member Since
+            </label>
             <div className="mt-1 p-2 bg-gray-50 rounded border">
               {new Date(user.created_at).toLocaleDateString()}
             </div>
@@ -161,7 +178,9 @@ export default function Profile() {
         <div className="space-y-6">
           {/* Profile Update Form */}
           <form onSubmit={handleUpdate} className="space-y-4">
-            <h3 className="text-lg font-semibold">Update Profile Information</h3>
+            <h3 className="text-lg font-semibold">
+              Update Profile Information
+            </h3>
             <input
               name="full_name"
               value={form.full_name}
@@ -185,7 +204,10 @@ export default function Profile() {
               disabled
             />
             <div className="flex gap-2">
-              <button type="submit" className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+              <button
+                type="submit"
+                className="bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
+              >
                 Save Changes
               </button>
               <button
@@ -207,7 +229,10 @@ export default function Profile() {
               className="w-full border p-2 rounded"
               accept="image/*"
             />
-            <button type="submit" className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+            <button
+              type="submit"
+              className="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            >
               Upload Avatar
             </button>
           </form>
@@ -231,7 +256,10 @@ export default function Profile() {
               className="w-full border p-2 rounded"
               placeholder="New Password"
             />
-            <button type="submit" className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700">
+            <button
+              type="submit"
+              className="bg-red-600 text-white py-2 px-4 rounded hover:bg-red-700"
+            >
               Change Password
             </button>
           </form>
