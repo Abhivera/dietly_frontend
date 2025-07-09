@@ -402,10 +402,10 @@ const Home = () => {
         <div className="mt-2 bg-white bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
           <div className="text-center pb-4 pt-12">
             <h2 className="federo-font  text-4xl font-bold mb-4">Why Choose Dietly?</h2>
-            <p className="text-emerald-600 text-lg mx-auto px-4 sm:px-8 whitespace-nowrap">
-              Smart nutrition tracking with AI-powered insights and
-              comprehensive reporting
-            </p>
+            <p className="text-emerald-600 text-lg px-4 sm:px-8 text-center">
+  Smart nutrition tracking with AI-powered insights and comprehensive reporting
+</p>
+
           </div>
 
           <div className="px-4 sm:px-8  bg-white text-gray-800">
@@ -484,8 +484,7 @@ const Home = () => {
             <h3 className="federo-font text-3xl font-bold mb-4">
               Ready to Transform Your Health?
             </h3>
-
-            <p className="text-emerald-600 mb-8 mx-auto text-lg leading-relaxed whitespace-nowrap">
+            <p className="text-emerald-600 text-lg px-4 sm:px-8 text-center">
               Join thousands of users already tracking their nutrition with AI.
               Save your meal history,
             </p>

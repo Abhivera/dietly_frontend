@@ -8,6 +8,7 @@ import Images from "./pages/Images";
 import MealSummary from "./pages/MealSummary";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
+import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import GoogleCallback from "./pages/GoogleCallback";
 import GoogleSuccess from "./pages/GoogleSuccess";
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/auth/google/callback" element={<GoogleCallback />} />
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route
             path="/profile"
             element={

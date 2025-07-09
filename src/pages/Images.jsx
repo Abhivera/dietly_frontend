@@ -1,34 +1,139 @@
-// src/pages/Images.jsx
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import * as imagesApi from "../api/images";
+import {
+  Calendar,
+  Upload,
+  Trash2,
+  Activity,
+  TrendingUp,
+  Eye,
+  Filter,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+  Utensils,
+  Zap,
+  Target,
+  BarChart3,
+  Clock,
+  Apple,
+  Flame,
+  Salad,
+} from "lucide-react";
+import {
+  getAllImages,
+  uploadAndAnalyzeImage,
+  deleteImage,
+  updateImageIsMeal,
+} from "../api/images";
+import { Popconfirm } from "antd";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Switch, FormControlLabel } from "@mui/material";
 
 export default function Images() {
-  const token = useSelector((state) => state.auth.token);
   const [file, setFile] = useState(null);
   const [images, setImages] = useState([]);
+  const [filteredImages, setFilteredImages] = useState([]);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-
-  const fetchImages = async () => {
-    try {
-      setLoading(true);
-      const res = await imagesApi.getAllImages(token);
-      // Handle both possible response structures
-      setImages(res.images || res.results || res);
-      console.log(res, "images response");
-    } catch (error) {
-      console.error("Error fetching images:", error);
-      setMessage("Failed to load images");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [description, setDescription] = useState("");
+  const [viewMode, setViewMode] = useState("daily"); // daily, weekly, monthly
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [mealOnly, setMealOnly] = useState(true); // default to meal only
+  const { token } = useSelector((state) => state.auth);
+  const [mealUpdatingId, setMealUpdatingId] = useState(null);
 
   useEffect(() => {
-    fetchImages();
-  }, []);
+    if (!token) return;
+    setLoading(true);
+    getAllImages(token)
+      .then((data) => {
+        setImages(data.images || []);
+        setFilteredImages(data.images || []);
+        if (data.images && data.images.length > 0) {
+          setMessage(""); // Clear error if images are loaded
+        } else {
+          setMessage("No images found");
+        }
+      })
+      .catch(() => {
+        setImages([]);
+        setFilteredImages([]);
+        setMessage("Failed to load images");
+      })
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  // Filter and search logic
+  useEffect(() => {
+    let filtered = images;
+
+    // Filter by meal switch
+    if (mealOnly) {
+      filtered = filtered.filter((img) => img.analysis?.is_meal);
+    }
+
+    // Filter by search term
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (img) =>
+          img.original_filename
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          img.analysis?.description
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          img.analysis?.food_items?.some((item) =>
+            item.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+      );
+    }
+
+    // Filter by date range based on view mode
+    const startOfDay = new Date(selectedDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    if (viewMode === "daily") {
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((img) => {
+        const imgDate = new Date(img.created_at || img.upload_date);
+        return imgDate >= startOfDay && imgDate <= endOfDay;
+      });
+    } else if (viewMode === "weekly") {
+      const startOfWeek = new Date(selectedDate);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      endOfWeek.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((img) => {
+        const imgDate = new Date(img.created_at || img.upload_date);
+        return imgDate >= startOfWeek && imgDate <= endOfWeek;
+      });
+    } else if (viewMode === "monthly") {
+      const startOfMonth = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        1
+      );
+      const endOfMonth = new Date(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth() + 1,
+        0
+      );
+      endOfMonth.setHours(23, 59, 59, 999);
+      filtered = filtered.filter((img) => {
+        const imgDate = new Date(img.created_at || img.upload_date);
+        return imgDate >= startOfMonth && imgDate <= endOfMonth;
+      });
+    }
+
+    setFilteredImages(filtered);
+  }, [images, mealOnly, searchTerm, viewMode, selectedDate]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -36,21 +141,22 @@ export default function Images() {
       setMessage("Please select a file first");
       return;
     }
-    
+    if (!token) {
+      setMessage("You must be logged in to upload images");
+      return;
+    }
     try {
       setUploading(true);
       setMessage("");
-      const res = await imagesApi.uploadAndAnalyzeImage(token, file);
-      
-      if (res.success) {
-        setMessage("Image uploaded and analyzed successfully!");
-        setFile(null); // Clear the file input
-        // Reset the file input
-        e.target.reset();
-        fetchImages();
+      const res = await uploadAndAnalyzeImage(token, file, description);
+      if (res && res.image) {
+        setImages((prev) => [res.image, ...prev]);
+        toast.success("Image uploaded and analyzed successfully!");
       } else {
-        setMessage(res.detail || "Upload failed");
+        setMessage(res?.message || "Upload failed. Please try again.");
       }
+      setFile(null);
+      setDescription("");
     } catch (error) {
       console.error("Upload error:", error);
       setMessage("Upload failed. Please try again.");
@@ -60,13 +166,49 @@ export default function Images() {
   };
 
   const handleDelete = async (id) => {
+    if (!token) {
+      setMessage("You must be logged in to delete images");
+      return;
+    }
     try {
-      await imagesApi.deleteImage(token, id);
-      fetchImages();
-      setMessage("Image deleted successfully");
+      await deleteImage(token, id);
+      setImages((prev) => prev.filter((img) => img.id !== id));
+      toast.success("Image deleted successfully");
     } catch (error) {
       console.error("Delete error:", error);
       setMessage("Failed to delete image");
+    }
+  };
+
+  const handleToggleMeal = async (img) => {
+    if (!token) {
+      setMessage("You must be logged in to update meal status");
+      return;
+    }
+    if (!img.analysis?.is_food) return;
+    setMealUpdatingId(img.id);
+    try {
+      const newIsMeal = !img.analysis.is_meal;
+      const res = await updateImageIsMeal(token, img.id, newIsMeal);
+      if (res && res.success) {
+        setImages((prev) =>
+          prev.map((i) =>
+            i.id === img.id
+              ? {
+                  ...i,
+                  analysis: { ...i.analysis, is_meal: newIsMeal },
+                }
+              : i
+          )
+        );
+        toast.success(newIsMeal ? "Added to meal" : "Removed from meal");
+      } else {
+        setMessage(res?.message || "Failed to update meal status");
+      }
+    } catch {
+      setMessage("Failed to update meal status");
+    } finally {
+      setMealUpdatingId(null);
     }
   };
 
@@ -80,123 +222,493 @@ export default function Images() {
     return `${exercise.steps} steps (${exercise.walking_km}km walk)`;
   };
 
+  const calculateStats = () => {
+    const foodImages = filteredImages.filter((img) => img.analysis?.is_food);
+    const totalCalories = foodImages.reduce(
+      (sum, img) => sum + (img.analysis?.calories || 0),
+      0
+    );
+    const avgCalories =
+      foodImages.length > 0 ? Math.round(totalCalories / foodImages.length) : 0;
+
+    return {
+      totalImages: filteredImages.length,
+      foodImages: foodImages.length,
+      totalCalories,
+      avgCalories,
+    };
+  };
+
+  const stats = calculateStats();
+
+  const formatDateRange = () => {
+    if (viewMode === "daily") {
+      return selectedDate.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } else if (viewMode === "weekly") {
+      const startOfWeek = new Date(selectedDate);
+      startOfWeek.setDate(startOfWeek.getDate() - startOfWeek.getDay());
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(endOfWeek.getDate() + 6);
+      return `${startOfWeek.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      })} - ${endOfWeek.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })}`;
+    } else {
+      return selectedDate.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+      });
+    }
+  };
+
+  const navigateDate = (direction) => {
+    const newDate = new Date(selectedDate);
+    if (viewMode === "daily") {
+      newDate.setDate(newDate.getDate() + direction);
+    } else if (viewMode === "weekly") {
+      newDate.setDate(newDate.getDate() + direction * 7);
+    } else {
+      newDate.setMonth(newDate.getMonth() + direction);
+    }
+    setSelectedDate(newDate);
+  };
+
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Your Food Images</h2>
-      
-      {/* Upload Form */}
-      <form onSubmit={handleUpload} className="flex gap-2 mb-6">
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setFile(e.target.files[0])}
-          className="border p-2 rounded flex-1"
-          disabled={uploading}
-        />
-        <button 
-          type="submit" 
-          disabled={uploading || !file}
-          className="bg-blue-600 text-white px-4 rounded disabled:bg-gray-400"
-        >
-          {uploading ? "Uploading..." : "Upload & Analyze"}
-        </button>
-      </form>
-
-      {/* Messages */}
-      {message && (
-        <div className={`mb-4 p-3 rounded ${
-          message.includes("success") || message.includes("uploaded") 
-            ? "bg-green-100 text-green-700" 
-            : "bg-red-100 text-red-700"
-        }`}>
-          {message}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="text-center py-8">
-          <div className="text-gray-500">Loading images...</div>
-        </div>
-      )}
-
-      {/* Images Grid */}
-      <div className="grid gap-4">
-        {images && images.length > 0 ? (
-          images.map((img) => (
-            <div
-              key={img.id}
-              className="border rounded-lg p-4 flex gap-4 items-start bg-gray-50"
-            >
-              <img
-                src={img.file_url}
-                alt={img.original_filename}
-                className="w-32 h-32 object-cover rounded-lg flex-shrink-0"
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 p-4">
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <div className="max-w-7xl mx-auto">
+        {/* Upload Section */}
+        <div className="mb-6">
+          {!file ? (
+            <div className="border-2 border-dashed border-emerald-300 rounded-xl p-12 text-center bg-transparent hover:scale-[1.02] transition-all duration-300">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setFile(e.target.files[0])}
+                className="hidden"
+                id="image-upload"
+                disabled={uploading}
               />
-              <div className="flex-1">
-                <div className="font-bold text-lg mb-2">{img.original_filename}</div>
-                {img.analysis ? (
-                  <div className="text-sm text-gray-700 space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        img.analysis.is_food ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {img.analysis.is_food ? 'Food Item' : 'Not Food'}
-                      </span>
-                      {img.analysis.is_food && (
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                          {img.analysis.calories} calories
-                        </span>
-                      )}
-                    </div>
-                    
-                    {img.analysis.food_items && img.analysis.food_items.length > 0 && (
-                      <div>
-                        <strong>Items:</strong> {img.analysis.food_items.join(", ")}
-                      </div>
-                    )}
-                    
-                    {img.analysis.description && (
-                      <div>
-                        <strong>Description:</strong> {img.analysis.description}
-                      </div>
-                    )}
-                    
-                    {img.analysis.nutrients && (
-                      <div>
-                        <strong>Nutrients:</strong> {formatNutrients(img.analysis.nutrients)}
-                      </div>
-                    )}
-                    
-                    {img.analysis.exercise_recommendations && (
-                      <div>
-                        <strong>Exercise to burn:</strong> {formatExercise(img.analysis.exercise_recommendations)}
-                      </div>
-                    )}
-                    
-                    <div className="text-xs text-gray-500">
-                      Confidence: {(img.analysis.confidence * 100).toFixed(1)}%
-                    </div>
+              <label htmlFor="image-upload" className="cursor-pointer">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center">
+                    <Upload className="w-10 h-10 text-emerald-600" />
                   </div>
-                ) : (
-                  <div className="text-gray-500 text-sm">Analysis not available</div>
-                )}
+                  <div>
+                    <p className="text-xl font-semibold text-gray-700 mb-2">
+                      Upload Food Image for Analysis
+                    </p>
+                    <p className="text-gray-500 mb-2">
+                      Click to select or drag and drop your image here
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      Supports JPG, PNG (max 10MB)
+                    </p>
+                  </div>
+                </div>
+              </label>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              <div className="relative group w-full max-w-md mx-auto rounded-xl overflow-hidden">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="Selected food"
+                  className="w-full h-auto object-cover rounded-xl"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    onClick={() => setFile(null)}
+                    className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 shadow-lg transition-colors duration-200"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
               </div>
+              <div className="text-center">
+                <input
+                  type="text"
+                  placeholder="Add a description..."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full max-w-md mx-auto mt-2 px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-700 bg-white"
+                  disabled={uploading}
+                />
+              </div>
+              <div className="text-center">
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading || !file}
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white px-8 py-4 rounded-xl font-semibold w-full max-w-md mx-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 mr-2" />
+                      Upload & Analyze
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            {/* View Mode Toggle */}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-emerald-600" />
+              <div className="bg-gray-100 rounded-lg p-1 flex">
+                {["daily", "weekly", "monthly"].map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`px-4 py-2 rounded-md font-medium transition-all flex items-center gap-2 ${
+                      viewMode === mode
+                        ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-sm"
+                        : "text-gray-600 hover:text-gray-800"
+                    }`}
+                  >
+                    {mode === "daily" && <Clock className="w-4 h-4" />}
+                    {mode === "weekly" && <BarChart3 className="w-4 h-4" />}
+                    {mode === "monthly" && <TrendingUp className="w-4 h-4" />}
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {/* Date Navigation */}
+            <div className="flex items-center gap-4">
               <button
-                onClick={() => handleDelete(img.id)}
-                className="text-red-500 hover:text-red-700 px-3 py-1 rounded border border-red-300 hover:border-red-500 transition-colors"
+                onClick={() => navigateDate(-1)}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-colors"
               >
-                Delete
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <span className="font-medium text-gray-800 min-w-0 text-center">
+                {formatDateRange()}
+              </span>
+              <button
+                onClick={() => navigateDate(1)}
+                className="p-2 rounded-lg border border-gray-300 hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-colors"
+              >
+                <ChevronRight className="w-5 h-5" />
               </button>
             </div>
-          ))
-        ) : (
-          !loading && (
-            <div className="text-center py-8 text-gray-500">
-              No images found. Upload your first food image to get started!
+            {/* Search */}
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                />
+              </div>
             </div>
-          )
+            {/* Meal Switch */}
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={mealOnly}
+                  onChange={() => setMealOnly((prev) => !prev)}
+                  color="success"
+                />
+              }
+              label={
+                mealOnly ? (
+                  <span className="flex items-center gap-1">
+                    <Salad className="w-5 h-5 text-emerald-600" /> Meals
+                  </span>
+                ) : (
+                  "All Items"
+                )
+              }
+              className="mr-4"
+            />
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <Eye className="w-6 h-6 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Images</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.totalImages}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-teal-50 rounded-lg">
+                <Apple className="w-6 h-6 text-teal-600" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Food Items</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.foodImages}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-600">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-100 rounded-lg">
+                <Flame className="w-6 h-6 text-emerald-700" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Total Calories</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.totalCalories}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-600">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-teal-50 rounded-lg">
+                <Target className="w-6 h-6 text-teal-700" />
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Avg Calories</p>
+                <p className="text-2xl font-bold text-gray-800">
+                  {stats.avgCalories}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Messages */}
+        {message && filteredImages.length === 0 && (
+          <div
+            className={`mb-6 p-4 rounded-xl flex items-center gap-3 ${
+              message.includes("success") || message.includes("uploaded")
+                ? "bg-green-500 bg-opacity-10 border border-green-500 text-green-600"
+                : "bg-red-500 bg-opacity-10 border border-red-500 text-red-600"
+            }`}
+          >
+            {message.includes("success") || message.includes("uploaded") ? (
+              <Zap className="w-5 h-5" />
+            ) : (
+              <Activity className="w-5 h-5" />
+            )}
+            {message}
+          </div>
         )}
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your food images...</p>
+          </div>
+        )}
+
+        {/* Images Grid */}
+        <div className="grid gap-6">
+          {filteredImages && filteredImages.length > 0
+            ? filteredImages.map((img) => (
+                <div
+                  key={img.id}
+                  className="overflow-hidden hover:shadow-2xl transition-shadow duration-300"
+                >
+                  <div className="p-6">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      <div className="flex-shrink-0">
+                        <img
+                          src={img.file_url}
+                          alt={img.original_filename}
+                          className="w-full lg:w-48 h-48 object-cover rounded-xl shadow-md"
+                        />
+                      </div>
+                      <div className="flex-1 space-y-4">
+                        <div className="flex items-start justify-between">
+                          <h3 className="text-xl font-semibold text-gray-800 break-words flex items-center gap-2">
+                            <Upload className="w-5 h-5 text-emerald-600" />
+                            {img.original_filename}
+                          </h3>
+                          <Popconfirm
+                            title="Are you sure you want to delete this image?"
+                            onConfirm={() => handleDelete(img.id)}
+                            okText="Yes"
+                            cancelText="No"
+                          >
+                            <button className="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-100 transition-colors">
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </Popconfirm>
+                        </div>
+                        {img.analysis ? (
+                          <div className="space-y-3">
+                            <div className="flex flex-wrap gap-2">
+                              <span
+                                className={`px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1 ${
+                                  img.analysis.is_food
+                                    ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                    : "bg-gray-100 text-gray-800 border border-gray-200"
+                                }`}
+                              >
+                                {img.analysis.is_food ? (
+                                  <>
+                                    <Apple className="w-4 h-4" />
+                                    Food Item
+                                  </>
+                                ) : (
+                                  <>
+                                    <Filter className="w-4 h-4" />
+                                    Not Food
+                                  </>
+                                )}
+                              </span>
+                              {img.analysis.is_food && (
+                                <span className="px-3 py-1 bg-teal-50 text-teal-700 border border-teal-200 rounded-full text-sm font-medium flex items-center gap-1">
+                                  <Flame className="w-4 h-4" />
+                                  {img.analysis.calories} calories
+                                </span>
+                              )}
+                              <span className="px-3 py-1 bg-emerald-100 text-emerald-700 border border-emerald-200 rounded-full text-sm font-medium flex items-center gap-1">
+                                <Activity className="w-4 h-4" />
+                                {(img.analysis.confidence * 100).toFixed(1)}%
+                                confidence
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {img.analysis.food_items &&
+                                img.analysis.food_items.length > 0 && (
+                                  <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                                    <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                                      <Utensils className="w-4 h-4 text-emerald-600" />
+                                      Food Items
+                                    </h4>
+                                    <p className="text-sm text-gray-600">
+                                      {img.analysis.food_items.join(", ")}
+                                    </p>
+                                  </div>
+                                )}
+                              {img.analysis.description && (
+                                <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                                  <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                                    <Eye className="w-4 h-4 text-teal-600" />
+                                    Description
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {img.analysis.description}
+                                  </p>
+                                </div>
+                              )}
+                              {img.analysis.nutrients && (
+                                <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-200">
+                                  <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                                    <BarChart3 className="w-4 h-4 text-emerald-600" />
+                                    Nutrients
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {formatNutrients(img.analysis.nutrients)}
+                                  </p>
+                                </div>
+                              )}
+                              {img.analysis.exercise_recommendations && (
+                                <div className="bg-teal-50 p-4 rounded-lg border border-teal-200">
+                                  <h4 className="font-medium text-gray-800 mb-2 flex items-center gap-2">
+                                    <Activity className="w-4 h-4 text-teal-600" />
+                                    Exercise to Burn
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {formatExercise(
+                                      img.analysis.exercise_recommendations
+                                    )}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                            {img.analysis && img.analysis.is_food && (
+                              <div className="mt-4 flex justify-end">
+                                <button
+                                  onClick={() => handleToggleMeal(img)}
+                                  disabled={mealUpdatingId === img.id}
+                                  className={`px-4 py-2 rounded-lg font-semibold transition-colors duration-200 shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-400
+                                    ${
+                                      img.analysis.is_meal
+                                        ? "bg-red-100 text-red-700 hover:bg-red-200"
+                                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                    }
+                                    ${
+                                      mealUpdatingId === img.id
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                    }
+                                  `}
+                                >
+                                  {mealUpdatingId === img.id
+                                    ? "Updating..."
+                                    : img.analysis.is_meal
+                                    ? "Remove from Meal"
+                                    : "Add to Meal"}
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                            <p className="text-yellow-800 text-sm flex items-center gap-2">
+                              <Filter className="w-4 h-4" />
+                              Analysis not available
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            : !loading && (
+                <div className="text-center py-12">
+                  <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Upload className="w-12 h-12 text-emerald-600" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-gray-800 mb-2">
+                    No images found
+                  </h3>
+                  <p className="text-gray-600">
+                    Upload your first food image to get started with AI-powered
+                    nutrition analysis!
+                  </p>
+                </div>
+              )}
+        </div>
       </div>
     </div>
   );
