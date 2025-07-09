@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getCurrentUser } from "../slices/authSlice";
+import { getCurrentUser, setToken } from "../slices/authSlice";
 
 export default function GoogleSuccess() {
   const dispatch = useDispatch();
@@ -13,6 +13,7 @@ export default function GoogleSuccess() {
     const token = params.get("token");
     if (token) {
       localStorage.setItem("access_token", token);
+      dispatch(setToken(token));
       dispatch(getCurrentUser(token));
       navigate("/");
     } else {
