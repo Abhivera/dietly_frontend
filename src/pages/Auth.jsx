@@ -100,21 +100,11 @@ export default function Auth() {
           {/* Sliding background */}
           <div
             className={`absolute top-1 bottom-1 w-1/2 bg-emerald-600 rounded-full transition-transform duration-300 ease-in-out ${
-              mode === "login" ? "translate-x-full" : "translate-x-0"
+              mode === "register" ? "translate-x-full" : "translate-x-0"
             }`}
           />
 
           {/* Toggle buttons */}
-          <button
-            className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-full transition-colors duration-300 ${
-              mode === "register"
-                ? "text-white"
-                : "text-gray-600 hover:text-gray-800"
-            }`}
-            onClick={() => toggleMode("register")}
-          >
-            Sign Up
-          </button>
           <button
             className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-full transition-colors duration-300 ${
               mode === "login"
@@ -124,6 +114,16 @@ export default function Auth() {
             onClick={() => toggleMode("login")}
           >
             Log In
+          </button>
+          <button
+            className={`relative z-10 flex-1 py-2 px-4 text-sm font-medium rounded-full transition-colors duration-300 ${
+              mode === "register"
+                ? "text-white"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+            onClick={() => toggleMode("register")}
+          >
+            Sign Up
           </button>
         </div>
       </div>
@@ -157,6 +157,44 @@ export default function Auth() {
                     <p className="text-gray-600 text-sm">
                       Sign up for a new account
                     </p>
+                  </div>
+
+                  {/* Google Sign Up Button */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm mb-2"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 48 48">
+                      <g>
+                        <path
+                          fill="#4285F4"
+                          d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C35.91 2.54 30.28 0 24 0 14.82 0 6.73 5.82 2.69 14.09l7.98 6.19C12.13 13.6 17.56 9.5 24 9.5z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.02l7.19 5.59C43.98 37.13 46.1 31.3 46.1 24.55z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M10.67 28.28A14.5 14.5 0 019.5 24c0-1.49.26-2.93.72-4.28l-7.98-6.19A23.93 23.93 0 000 24c0 3.77.9 7.34 2.49 10.47l8.18-6.19z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M24 48c6.28 0 11.56-2.08 15.41-5.67l-7.19-5.59c-2.01 1.35-4.59 2.16-8.22 2.16-6.44 0-11.87-4.1-13.83-9.77l-8.18 6.19C6.73 42.18 14.82 48 24 48z"
+                        />
+                        <path fill="none" d="M0 0h48v48H0z" />
+                      </g>
+                    </svg>
+                    <span>Sign up with Google</span>
+                  </button>
+                  {/* OR Separator */}
+                  <div className="flex items-center my-2">
+                    <div className="flex-grow h-px bg-gray-300" />
+                    <span className="mx-2 text-gray-400 text-xs font-semibold">
+                      OR
+                    </span>
+                    <div className="flex-grow h-px bg-gray-300" />
                   </div>
 
                   <div>
@@ -302,6 +340,44 @@ export default function Auth() {
                     </p>
                   </div>
 
+                  {/* Google Sign In Button */}
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm mb-2"
+                  >
+                    <svg className="h-5 w-5" viewBox="0 0 48 48">
+                      <g>
+                        <path
+                          fill="#4285F4"
+                          d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C35.91 2.54 30.28 0 24 0 14.82 0 6.73 5.82 2.69 14.09l7.98 6.19C12.13 13.6 17.56 9.5 24 9.5z"
+                        />
+                        <path
+                          fill="#34A853"
+                          d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.02l7.19 5.59C43.98 37.13 46.1 31.3 46.1 24.55z"
+                        />
+                        <path
+                          fill="#FBBC05"
+                          d="M10.67 28.28A14.5 14.5 0 019.5 24c0-1.49.26-2.93.72-4.28l-7.98-6.19A23.93 23.93 0 000 24c0 3.77.9 7.34 2.49 10.47l8.18-6.19z"
+                        />
+                        <path
+                          fill="#EA4335"
+                          d="M24 48c6.28 0 11.56-2.08 15.41-5.67l-7.19-5.59c-2.01 1.35-4.59 2.16-8.22 2.16-6.44 0-11.87-4.1-13.83-9.77l-8.18 6.19C6.73 42.18 14.82 48 24 48z"
+                        />
+                        <path fill="none" d="M0 0h48v48H0z" />
+                      </g>
+                    </svg>
+                    <span>Sign in with Google</span>
+                  </button>
+                  {/* OR Separator */}
+                  <div className="flex items-center my-2">
+                    <div className="flex-grow h-px bg-gray-300" />
+                    <span className="mx-2 text-gray-400 text-xs font-semibold">
+                      OR
+                    </span>
+                    <div className="flex-grow h-px bg-gray-300" />
+                  </div>
+
                   <div>
                     <Field
                       type="text"
@@ -376,35 +452,6 @@ export default function Auth() {
                     ) : (
                       "Log In"
                     )}
-                  </button>
-                  {/* Google Login Button */}
-                  <button
-                    type="button"
-                    onClick={handleGoogleLogin}
-                    className="flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 py-3 rounded-lg font-medium transition-colors duration-200 shadow-sm"
-                  >
-                    <svg className="h-5 w-5" viewBox="0 0 48 48">
-                      <g>
-                        <path
-                          fill="#4285F4"
-                          d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C35.91 2.54 30.28 0 24 0 14.82 0 6.73 5.82 2.69 14.09l7.98 6.19C12.13 13.6 17.56 9.5 24 9.5z"
-                        />
-                        <path
-                          fill="#34A853"
-                          d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.02l7.19 5.59C43.98 37.13 46.1 31.3 46.1 24.55z"
-                        />
-                        <path
-                          fill="#FBBC05"
-                          d="M10.67 28.28A14.5 14.5 0 019.5 24c0-1.49.26-2.93.72-4.28l-7.98-6.19A23.93 23.93 0 000 24c0 3.77.9 7.34 2.49 10.47l8.18-6.19z"
-                        />
-                        <path
-                          fill="#EA4335"
-                          d="M24 48c6.28 0 11.56-2.08 15.41-5.67l-7.19-5.59c-2.01 1.35-4.59 2.16-8.22 2.16-6.44 0-11.87-4.1-13.83-9.77l-8.18 6.19C6.73 42.18 14.82 48 24 48z"
-                        />
-                        <path fill="none" d="M0 0h48v48H0z" />
-                      </g>
-                    </svg>
-                    <span>Sign in with Google</span>
                   </button>
                 </Form>
               )}
