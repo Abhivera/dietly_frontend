@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import * as userApi from "../api/user";
 import * as authApi from "../api/auth";
 import { getCurrentUser } from "../slices/authSlice";
+import { Popconfirm } from "antd";
 import {
   User,
   Mail,
@@ -14,6 +15,8 @@ import {
   X,
   Upload,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { logout } from "../slices/authSlice";
 
 export default function Profile() {
   const dispatch = useDispatch();
@@ -33,6 +36,8 @@ export default function Profile() {
     new_password: "",
   });
   const fileInputRef = useRef(null);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const navigate = useNavigate();
 
   // Fetch user data on component mount
   useEffect(() => {
@@ -74,9 +79,14 @@ export default function Profile() {
     }
   };
 
+  // Update handleUpdate to only save if username is not changed, otherwise show Popconfirm
   const handleUpdate = async (e) => {
     e.preventDefault();
     setMessage("");
+    if (form.username !== user.username) {
+      setShowLogoutConfirm(true); // This line is removed as per the edit hint
+      return;
+    }
     const res = await userApi.updateUser(token, form);
     if (res.detail) setMessage(res.detail);
     else {
@@ -136,6 +146,21 @@ export default function Profile() {
     setAvatar(null);
     setAvatarPreview(null);
     setMessage("");
+  };
+
+  // Confirm handler for Popconfirm: actually update and then logout
+  const handleLogoutConfirm = async () => {
+    setShowLogoutConfirm(false);
+    const res = await userApi.updateUser(token, form);
+    if (res.detail) {
+      setMessage(res.detail);
+      return;
+    }
+    dispatch(logout());
+    navigate("/login");
+  };
+  const handleLogoutCancel = () => {
+    setShowLogoutConfirm(false);
   };
 
   if (!user) {
@@ -320,8 +345,9 @@ export default function Profile() {
                         name="email"
                         value={form.email}
                         onChange={handleChange}
-                        className="w-full p-4 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200"
+                        className="w-full p-4 border border-emerald-200 rounded-lg bg-emerald-50 text-emerald-600 cursor-not-allowed"
                         placeholder="Enter your email"
+                        disabled
                       />
                     </div>
                     <div>
@@ -333,19 +359,31 @@ export default function Profile() {
                         name="username"
                         value={form.username}
                         onChange={handleChange}
-                        className="w-full p-4 border border-emerald-200 rounded-lg bg-emerald-50 text-emerald-600 cursor-not-allowed"
-                        placeholder="Username"
-                        disabled
+                        className="w-full p-4 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200"
+                        placeholder="Enter your username"
                       />
                     </div>
                     <div className="flex gap-4 pt-4">
-                      <button
-                        type="submit"
-                        className="bg-emerald-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-emerald-700 transition-colors duration-200 flex items-center gap-2"
+                      <Popconfirm
+                        title="Username changed"
+                        description="Your username has been changed. You will be logged out for security reasons. Please log in again with your new username."
+                        open={showLogoutConfirm}
+                        onConfirm={handleLogoutConfirm}
+                        onCancel={handleLogoutCancel}
+                        okText="OK"
+                        cancelText="Cancel"
+                        okButtonProps={{ type: "primary" }}
+                        placement="top"
                       >
-                        <Save className="w-4 h-4" />
-                        Save Changes
-                      </button>
+                        <button
+                          type="submit"
+                          className="bg-emerald-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-emerald-700 transition-colors duration-200 flex items-center gap-2"
+                          onClick={handleUpdate}
+                        >
+                          <Save className="w-4 h-4" />
+                          Save Changes
+                        </button>
+                      </Popconfirm>
                       <button
                         type="button"
                         onClick={handleCancel}

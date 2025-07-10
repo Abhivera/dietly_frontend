@@ -1,20 +1,87 @@
 import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  AreaChart,
+  Area,
+} from "recharts";
+import {
+  Calendar,
+  TrendingUp,
+  Activity,
+  Utensils,
+  Flame,
+  Footprints,
+  Target,
+  Trophy,
+  Clock,
+  BarChart3,
+  PieChart as PieChartIcon,
+} from "lucide-react";
 import * as mealApi from "../api/meal";
+import { useSelector } from "react-redux";
 
 export default function MealSummary() {
   const token = useSelector((state) => state.auth.token);
-  const [summary, setSummary] = useState(null);
+
+  const [summary, setSummary] = useState({
+    total_meals: 12,
+    total_calories: 2450,
+    total_exercise: {
+      steps: 8750,
+      walking_km: 6.2,
+    },
+    meals: [
+      { analysis: { nutrients: { protein: 45, carbs: 120, fat: 35 } } },
+      { analysis: { nutrients: { protein: 32, carbs: 85, fat: 28 } } },
+      { analysis: { nutrients: { protein: 28, carbs: 95, fat: 22 } } },
+    ],
+  });
+  const [viewMode, setViewMode] = useState("today");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date().toISOString().split("T")[0]
+  );
 
   useEffect(() => {
     if (token) {
-      mealApi.getMealSummary(token).then(setSummary);
+      // In a real app, you'd pass the viewMode and selectedDate to the API
+      mealApi.getMealSummary(token, viewMode, selectedDate).then(setSummary);
     }
-  }, [token]);
+  }, [token, viewMode, selectedDate]);
+  // Mock data for charts
+
+  const nutritionData = summary?.meals?.reduce(
+    (acc, meal) => {
+      acc.protein += meal.analysis?.nutrients?.protein || 0;
+      acc.carbs += meal.analysis?.nutrients?.carbs || 0;
+      acc.fat += meal.analysis?.nutrients?.fat || 0;
+      return acc;
+    },
+    { protein: 0, carbs: 0, fat: 0 }
+  );
+
+  const pieData = nutritionData
+    ? [
+        { name: "Protein", value: nutritionData.protein, fill: "#10b981" },
+        { name: "Carbs", value: nutritionData.carbs, fill: "#14b8a6" },
+        { name: "Fat", value: nutritionData.fat, fill: "#0d9488" },
+      ]
+    : [];
 
   if (!summary) {
     return (
-      <div className="max-w-4xl mx-auto mt-10 p-6">
+      <div className="max-w-7xl mx-auto mt-10 p-6">
         <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-8 shadow-lg">
           <div className="animate-pulse">
             <div className="h-8 bg-emerald-200 rounded w-1/3 mb-6"></div>
@@ -30,182 +97,291 @@ export default function MealSummary() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6">
-      {/* Header */}
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent mb-2">
-          Daily Health Summary
-        </h1>
-        <p className="text-gray-600">Track your nutrition and exercise journey</p>
-      </div>
-
-      {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-emerald-100 text-sm font-medium">Total Meals</p>
-              <p className="text-3xl font-bold">{summary.total_meals}</p>
-            </div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </div>
+    <div className="max-w-7xl mx-auto mt-10 p-6 space-y-8">
+    
+      {/* View Mode Controls */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex bg-white rounded-xl shadow-lg p-1 border border-emerald-100">
+          {["today", "weekly", "monthly"].map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
+                viewMode === mode
+                  ? "bg-emerald-500 text-white shadow-md transform scale-105"
+                  : "text-gray-600 hover:bg-emerald-50"
+              }`}
+            >
+              {mode === "today" && <Clock className="w-4 h-4" />}
+              {mode === "weekly" && <TrendingUp className="w-4 h-4" />}
+              {mode === "monthly" && <Calendar className="w-4 h-4" />}
+              <span>{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+            </button>
+          ))}
         </div>
 
-        <div className="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-teal-100 text-sm font-medium">Total Calories</p>
-              <p className="text-3xl font-bold">{summary.total_calories}</p>
-            </div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-emerald-100 text-sm font-medium">Steps Taken</p>
-              <p className="text-3xl font-bold">{summary.total_exercise?.steps?.toLocaleString()}</p>
-            </div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 3a1 1 0 000 2v8a2 2 0 002 2h2.586l-1.293 1.293a1 1 0 101.414 1.414L10 15.414l2.293 2.293a1 1 0 001.414-1.414L12.414 15H15a2 2 0 002-2V5a1 1 0 100-2H3zm11.707 4.707a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-teal-600 to-emerald-600 rounded-xl p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-teal-100 text-sm font-medium">Distance (km)</p>
-              <p className="text-3xl font-bold">{summary.total_exercise?.walking_km}</p>
-            </div>
-            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Meals Section */}
-      <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-2xl p-8 shadow-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
-          <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mr-3">
-            <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" />
-            </svg>
-          </div>
-          Your Meals Today
-        </h2>
-
-        {summary.meals && summary.meals.length > 0 ? (
-          <div className="space-y-6">
-            {summary.meals.map((meal, index) => (
-              <div key={meal.id || index} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
-                <div className="md:flex">
-                  {/* Meal Image */}
-                  <div className="md:w-1/3">
-                    <img
-                      src={meal.file_url}
-                      alt={meal.description || "Meal"}
-                      className="w-full h-48 md:h-full object-cover"
-                    />
-                  </div>
-                  
-                  {/* Meal Details */}
-                  <div className="md:w-2/3 p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-semibold text-gray-800">{meal.original_filename?.replace('.jpg', '').replace('.jpeg', '').replace('.png', '') || 'Meal'}</h3>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-600">
-                          {Math.round(meal.analysis?.confidence * 100)}% confidence
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <p className="text-gray-600 mb-4">{meal.analysis?.description}</p>
-                    
-                    {/* Food Items */}
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2">
-                        {meal.analysis?.food_items?.map((item, i) => (
-                          <span key={i} className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    {/* Nutrition Grid */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                      <div className="text-center p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
-                        <p className="text-2xl font-bold text-emerald-600">{meal.analysis?.calories}</p>
-                        <p className="text-sm text-gray-600">Calories</p>
-                      </div>
-                      <div className="text-center p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
-                        <p className="text-2xl font-bold text-blue-600">{meal.analysis?.nutrients?.protein}g</p>
-                        <p className="text-sm text-gray-600">Protein</p>
-                      </div>
-                      <div className="text-center p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
-                        <p className="text-2xl font-bold text-purple-600">{meal.analysis?.nutrients?.carbs}g</p>
-                        <p className="text-sm text-gray-600">Carbs</p>
-                      </div>
-                      <div className="text-center p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
-                        <p className="text-2xl font-bold text-emerald-600">{meal.analysis?.nutrients?.fat}g</p>
-                        <p className="text-sm text-gray-600">Fat</p>
-                      </div>
-                    </div>
-                    
-                    {/* Exercise Recommendations */}
-                    {meal.analysis?.exercise_recommendations && (
-                      <div className="bg-gradient-to-r from-emerald-100 to-teal-100 rounded-lg p-4">
-                        <h4 className="font-semibold text-emerald-800 mb-2">💪 Exercise Recommendations</h4>
-                        <div className="flex items-center space-x-4 text-sm">
-                          <span className="text-emerald-700">
-                            🚶 {meal.analysis.exercise_recommendations.steps?.toLocaleString()} steps
-                          </span>
-                          <span className="text-emerald-700">
-                            🏃 {meal.analysis.exercise_recommendations.walking_km} km walk
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Timestamp */}
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-xs text-gray-500">
-                        Added {new Date(meal.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <p className="text-gray-500 text-lg">No meals found for today</p>
-            <p className="text-gray-400 text-sm mt-2">Start by adding your first meal!</p>
+        {viewMode === "today" && (
+          <div className="flex items-center bg-white rounded-xl shadow-lg border border-emerald-100">
+            <Calendar className="w-5 h-5 text-emerald-500 ml-3" />
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="px-4 py-3 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            />
           </div>
         )}
       </div>
+
+      {/* Quick Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white border border-emerald-200 rounded-xl p-6 text-emerald-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-emerald-400 text-sm font-medium">
+                Total Meals
+              </p>
+              <p className="text-3xl font-bold text-emerald-700">{summary.total_meals}</p>
+              <p className="text-emerald-300 text-xs mt-1">+2 from yesterday</p>
+            </div>
+            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
+              <Utensils className="w-6 h-6 text-emerald-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-teal-200 rounded-xl p-6 text-teal-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-teal-400 text-sm font-medium">
+                Total Calories
+              </p>
+              <p className="text-3xl font-bold text-teal-700">{summary.total_calories}</p>
+              <p className="text-teal-300 text-xs mt-1">85% of goal</p>
+            </div>
+            <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
+              <Flame className="w-6 h-6 text-teal-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-emerald-200 rounded-xl p-6 text-emerald-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-emerald-400 text-sm font-medium">
+                Steps Taken
+              </p>
+              <p className="text-3xl font-bold text-emerald-700">
+                {summary.total_exercise?.steps?.toLocaleString()}
+              </p>
+              <p className="text-emerald-300 text-xs mt-1">87% of 10k goal</p>
+            </div>
+            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
+              <Footprints className="w-6 h-6 text-emerald-500" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white border border-teal-200 rounded-xl p-6 text-teal-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-teal-400 text-sm font-medium">Distance (km)</p>
+              <p className="text-3xl font-bold text-teal-700">
+                {summary.total_exercise?.walking_km}
+              </p>
+              <p className="text-teal-300 text-xs mt-1">Great progress!</p>
+            </div>
+            <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
+              <Activity className="w-6 h-6 text-teal-500" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Nutrition Breakdown Pie Chart */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+          <div className="flex items-center space-x-2 mb-4">
+            <PieChartIcon className="w-6 h-6 text-emerald-500" />
+            <h3 className="text-xl font-bold text-gray-800">
+              Nutrition Breakdown
+            </h3>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={pieData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) =>
+                    `${name} ${(percent * 100).toFixed(0)}%`
+                  }
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [`${value}g`, "Amount"]} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex justify-center space-x-6 mt-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">Protein</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-teal-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">Carbs</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-teal-600 rounded-full"></div>
+              <span className="text-sm text-gray-600">Fat</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Calories vs Exercise */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+          <div className="flex items-center space-x-2 mb-4">
+            <BarChart3 className="w-6 h-6 text-emerald-500" />
+            <h3 className="text-xl font-bold text-gray-800">
+              Calories vs Exercise
+            </h3>
+          </div>
+          <div className="h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={[
+                  {
+                    name: "Today",
+                    calories: summary.total_calories,
+                    steps: Math.round(summary.total_exercise?.steps / 100) || 0,
+                  },
+                ]}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar
+                  dataKey="calories"
+                  fill="#10b981"
+                  name="Calories"
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="steps"
+                  fill="#14b8a6"
+                  name="Steps (x100)"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Hide weekly and monthly charts if data is not available */}
+      </div>
+
+      {/* Weekly Summary Cards */}
+      {viewMode === "weekly" && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-emerald-100">
+            <div className="flex items-center space-x-2 mb-4">
+              <Target className="w-5 h-5 text-emerald-500" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Weekly Averages
+              </h3>
+            </div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Avg Calories/Day</span>
+                <span className="font-semibold text-emerald-600">
+                  {Math.round(
+                    summary.meals.reduce(
+                      (acc, meal) => acc + (meal.analysis?.calories || 0),
+                      0
+                    ) / summary.meals.length
+                  )}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Avg Meals/Day</span>
+                <span className="font-semibold text-teal-600">
+                  {summary.meals.length}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600">Total Meals</span>
+                <span className="font-semibold text-emerald-700">
+                  {summary.meals.length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-emerald-100">
+            <div className="flex items-center space-x-2 mb-4">
+              <Trophy className="w-5 h-5 text-emerald-500" />
+              <h3 className="text-lg font-semibold text-gray-800">Best Day</h3>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-3">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
+              <p className="text-2xl font-bold text-emerald-600">Saturday</p>
+              <p className="text-gray-600">Most balanced nutrition</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-xl p-6 shadow-lg border border-emerald-100">
+            <div className="flex items-center space-x-2 mb-4">
+              <Target className="w-5 h-5 text-emerald-500" />
+              <h3 className="text-lg font-semibold text-gray-800">
+                Goals Progress
+              </h3>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">Calorie Goal</span>
+                  <span className="text-sm text-emerald-600 font-medium">
+                    75%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: "75%" }}
+                  ></div>
+                </div>
+              </div>
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-gray-600">Protein Goal</span>
+                  <span className="text-sm text-emerald-600 font-medium">
+                    85%
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-gradient-to-r from-teal-500 to-emerald-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: "85%" }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

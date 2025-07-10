@@ -381,48 +381,59 @@ export default function UserHome() {
         <div className="bg-white rounded-lg p-6 mb-6 border border-emerald-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* View Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-emerald-600" />
-              <div className="bg-emerald-100 rounded-lg p-1 flex">
-                {["daily", "weekly", "monthly"].map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() => setViewMode(mode)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-400
-                      ${
-                        viewMode === mode
-                          ? "bg-emerald-600 text-white"
-                          : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-200"
-                      }
-                    `}
-                  >
-                    {mode === "daily" && <Clock className="w-4 h-4" />}
-                    {mode === "weekly" && <BarChart3 className="w-4 h-4" />}
-                    {mode === "monthly" && <TrendingUp className="w-4 h-4" />}
-                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
+{/* View Mode Toggle */}
+<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+  <div className="flex items-center gap-2">
+    <Calendar className="w-5 h-5 text-emerald-600 hidden md:block" />
+    
+  </div>
+  <div className="bg-emerald-100 rounded-lg p-1 flex flex-col sm:flex-row w-full sm:w-auto">
+    {["daily", "weekly", "monthly"].map((mode) => (
+      <button
+        key={mode}
+        onClick={() => setViewMode(mode)}
+        className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center sm:justify-start gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-400
+          ${
+            viewMode === mode
+              ? "bg-emerald-600 text-white"
+              : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-200"
+          }
+        `}
+      >
+        {mode === "daily" && <Clock className="w-4 h-4" />}
+        {mode === "weekly" && <BarChart3 className="w-4 h-4" />}
+        {mode === "monthly" && <TrendingUp className="w-4 h-4" />}
+        {mode.charAt(0).toUpperCase() + mode.slice(1)}
+      </button>
+    ))}
+  </div>
+</div>
 
-            {/* Date Navigation */}
-            <div className="flex items-center gap-2 bg-emerald-100 rounded-lg px-2 py-1">
-              <button
-                onClick={() => navigateDate(-1)}
-                className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              >
-                <ChevronLeft className="w-5 h-5 text-emerald-600" />
-              </button>
-              <span className="font-medium text-emerald-800 min-w-0 text-center px-2">
-                {formatDateRange()}
-              </span>
-              <button
-                onClick={() => navigateDate(1)}
-                className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              >
-                <ChevronRight className="w-5 h-5 text-emerald-600" />
-              </button>
-            </div>
+
+           {/* Date Navigation */}
+<div className="flex items-center justify-between bg-emerald-100 rounded-lg px-3 py-2 w-full sm:w-auto">
+  {/* Left Arrow */}
+  <button
+    onClick={() => navigateDate(-1)}
+    className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
+  >
+    <ChevronLeft className="w-5 h-5 text-emerald-600" />
+  </button>
+
+  {/* Centered Date Text */}
+  <span className="flex-1 text-center font-medium text-emerald-800 px-4">
+    {formatDateRange()}
+  </span>
+
+  {/* Right Arrow */}
+  <button
+    onClick={() => navigateDate(1)}
+    className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
+  >
+    <ChevronRight className="w-5 h-5 text-emerald-600" />
+  </button>
+</div>
+
 
             {/* Search */}
             <div className="flex items-center gap-2">
@@ -587,7 +598,7 @@ export default function UserHome() {
                         </div>
                         {img.analysis ? (
                           <>
-                            <p className="text-xs text-gray-600 mb-2 line-clamp-2">
+                            <p className="hidden md:block text-xs text-gray-600 mb-2 line-clamp-2">
                               {img.analysis.description}
                             </p>
                             {/* Food Items */}
