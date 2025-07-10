@@ -31,6 +31,7 @@ import { Popconfirm } from "antd";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Switch, FormControlLabel } from "@mui/material";
+import { Link } from 'react-router-dom';
 
 export default function UserHome() {
   const [file, setFile] = useState(null);
@@ -290,10 +291,12 @@ export default function UserHome() {
       <div className="max-w-7xl mx-auto">
         {/* Welcome Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-white text-emerald-800 px-6 py-3 rounded-full text-base font-semibold mb-6 border border-emerald-200">
+        <Link to="/user-info">
+          <div className="inline-flex items-center gap-2 bg-white text-emerald-800 px-6 py-3 rounded-full text-base font-semibold mb-6 shadow-sm hover:shadow-md hover:bg-emerald-100 border border-emerald-200">
             <Pizza className="w-6 h-6 text-emerald-600 animate-bounce" />
             <span>Your Personalised Calorie Tracker</span>
           </div>
+          </Link>
         </div>
 
         {/* Upload Section */}

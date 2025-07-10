@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import GoogleCallback from "./pages/GoogleCallback";
 import GoogleSuccess from "./pages/GoogleSuccess";
+import UserInfo from "./pages/UserInfo";
 import { useSelector } from "react-redux";
 
 export default function App() {
@@ -35,7 +36,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
-      
+          <Route
+            path="/user-info"
+            element={
+              <ProtectedRoute>
+                <UserInfo />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/meal-summary"
             element={

@@ -36,16 +36,16 @@ export default function MealSummary() {
   const token = useSelector((state) => state.auth.token);
 
   const [summary, setSummary] = useState({
-    total_meals: 12,
-    total_calories: 2450,
+    total_meals: 0,
+    total_calories: 0,
     total_exercise: {
-      steps: 8750,
-      walking_km: 6.2,
+      steps: 0,
+      walking_km: 0,
     },
     meals: [
-      { analysis: { nutrients: { protein: 45, carbs: 120, fat: 35 } } },
-      { analysis: { nutrients: { protein: 32, carbs: 85, fat: 28 } } },
-      { analysis: { nutrients: { protein: 28, carbs: 95, fat: 22 } } },
+      { analysis: { nutrients: { protein: 0, carbs: 0, fat: 0 } } },
+      { analysis: { nutrients: { protein: 0, carbs: 0, fat: 0 } } },
+      { analysis: { nutrients: { protein: 0, carbs: 0, fat: 0 } } },
     ],
   });
   const [viewMode, setViewMode] = useState("today");
@@ -142,7 +142,7 @@ export default function MealSummary() {
                 Total Meals
               </p>
               <p className="text-3xl font-bold text-emerald-700">{summary.total_meals}</p>
-              <p className="text-emerald-300 text-xs mt-1">+2 from yesterday</p>
+
             </div>
             <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
               <Utensils className="w-6 h-6 text-emerald-500" />
@@ -157,7 +157,7 @@ export default function MealSummary() {
                 Total Calories
               </p>
               <p className="text-3xl font-bold text-teal-700">{summary.total_calories}</p>
-              <p className="text-teal-300 text-xs mt-1">85% of goal</p>
+
             </div>
             <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
               <Flame className="w-6 h-6 text-teal-500" />
@@ -174,7 +174,7 @@ export default function MealSummary() {
               <p className="text-3xl font-bold text-emerald-700">
                 {summary.total_exercise?.steps?.toLocaleString()}
               </p>
-              <p className="text-emerald-300 text-xs mt-1">87% of 10k goal</p>
+
             </div>
             <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
               <Footprints className="w-6 h-6 text-emerald-500" />
@@ -189,7 +189,7 @@ export default function MealSummary() {
               <p className="text-3xl font-bold text-teal-700">
                 {summary.total_exercise?.walking_km}
               </p>
-              <p className="text-teal-300 text-xs mt-1">Great progress!</p>
+
             </div>
             <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
               <Activity className="w-6 h-6 text-teal-500" />
@@ -328,7 +328,7 @@ export default function MealSummary() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-emerald-100">
+          {/* <div className="bg-white rounded-xl p-6 shadow-lg border border-emerald-100">
             <div className="flex items-center space-x-2 mb-4">
               <Trophy className="w-5 h-5 text-emerald-500" />
               <h3 className="text-lg font-semibold text-gray-800">Best Day</h3>
@@ -379,7 +379,7 @@ export default function MealSummary() {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       )}
     </div>

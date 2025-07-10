@@ -10,7 +10,8 @@ import {
   BarChart2,
   UserCircle,
   Menu,
-  X,
+  HeartPulse,
+  X
 } from "lucide-react";
 
 export default function Navbar() {
@@ -34,10 +35,16 @@ export default function Navbar() {
             icon: <BarChart2 className="w-4 h-4 mr-2" />,
           },
           {
+            path: "/user-info",
+            label: "Personalised Info",
+            icon: <HeartPulse className="w-4 h-4 mr-2" />,
+          },
+          {
             path: "/profile",
             label: "Profile",
             icon: <UserCircle className="w-4 h-4 mr-2" />,
           },
+         
         ]
       : []),
   ];
