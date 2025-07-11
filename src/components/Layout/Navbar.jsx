@@ -11,7 +11,7 @@ import {
   UserCircle,
   Menu,
   HeartPulse,
-  X
+  X,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -28,23 +28,22 @@ export default function Navbar() {
     { path: "/", label: "Home", icon: <HomeIcon className="w-4 h-4 mr-2" /> },
     ...(token
       ? [
-       
-          {
-            path: "/meal-summary",
-            label: "Summary",
-            icon: <BarChart2 className="w-4 h-4 mr-2" />,
-          },
+         
           {
             path: "/user-info",
             label: "Personalised Info",
             icon: <HeartPulse className="w-4 h-4 mr-2" />,
           },
           {
+            path: "/meal-summary",
+            label: "Summary",
+            icon: <BarChart2 className="w-4 h-4 mr-2" />,
+          },
+          {
             path: "/profile",
             label: "Profile",
             icon: <UserCircle className="w-4 h-4 mr-2" />,
           },
-         
         ]
       : []),
   ];
@@ -84,7 +83,9 @@ export default function Navbar() {
                 // className="w-full h-full object-contain filter brightness-0 invert"
               />
             </div>
-            <span className="font-bold text-emerald-800 text-xl tracking-tight">Dietly</span>
+            <span className="font-bold text-emerald-800 text-xl tracking-tight">
+              Dietly
+            </span>
           </Link>
 
           {/* Desktop Navigation - Polished design */}
@@ -113,7 +114,7 @@ export default function Navbar() {
                 onClick={handleLogout}
                 className="flex items-center px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-200 hover:border-red-300"
               >
-                <LogOut className="w-4 h-4 mr-2" /> 
+                <LogOut className="w-4 h-4 mr-2" />
                 Logout
               </button>
             )}

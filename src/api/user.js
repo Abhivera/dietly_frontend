@@ -1,6 +1,5 @@
 // src/api/user.js
-const BASE_URL =
-  import.meta.env.VITE_API_BASE_URL
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 export async function getUser(token) {
   const res = await fetch(`${BASE_URL}/users/me`, {
