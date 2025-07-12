@@ -134,7 +134,7 @@ export default function MealSummary() {
       </div>
 
       {/* Quick Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         <div className="bg-white border border-emerald-200 rounded-xl p-6 text-emerald-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
           <div className="flex items-center justify-between">
             <div>

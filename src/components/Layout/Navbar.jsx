@@ -28,10 +28,9 @@ export default function Navbar() {
     { path: "/", label: "Home", icon: <HomeIcon className="w-4 h-4 mr-2" /> },
     ...(token
       ? [
-         
           {
-            path: "/user-info",
-            label: "Personalised Info",
+            path: "/health-info",
+            label: "Health Info",
             icon: <HeartPulse className="w-4 h-4 mr-2" />,
           },
           {

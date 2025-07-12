@@ -31,7 +31,7 @@ import { Popconfirm } from "antd";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Switch, FormControlLabel } from "@mui/material";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 
 export default function UserHome() {
   const [file, setFile] = useState(null);
@@ -291,16 +291,16 @@ export default function UserHome() {
       <div className="max-w-7xl mx-auto">
         {/* Welcome Header */}
         <div className="text-center mb-10">
-        <Link to="/user-info">
-          <div className="inline-flex items-center gap-2 bg-white text-emerald-800 px-6 py-3 rounded-full text-base font-semibold mb-6 shadow-sm hover:shadow-md hover:bg-emerald-100 border border-emerald-200">
-            <Pizza className="w-6 h-6 text-emerald-600 animate-bounce" />
-            <span>Your Personalised Calorie Tracker</span>
-          </div>
+          <Link to="/health-info">
+            <div className="inline-flex items-center gap-2 bg-white text-emerald-800 px-6 py-3 rounded-full text-base font-semibold mb-6 shadow-sm hover:shadow-md hover:bg-emerald-100 border border-emerald-200">
+              <Pizza className="w-6 h-6 text-emerald-600 animate-bounce" />
+              <span>Your Personalised Calorie Tracker</span>
+            </div>
           </Link>
         </div>
 
-        {/* Upload Section */}
-        <div className="mb-6">
+        {/*Desktop Upload Section */}
+        <div className="hidden sm:block mb-6">
           {!file ? (
             <label htmlFor="image-upload" className="block cursor-pointer">
               <div className="group border-2 border-dashed border-emerald-300 rounded-lg p-14 text-center bg-white  transition-colors duration-300">
@@ -384,70 +384,67 @@ export default function UserHome() {
         <div className="bg-white rounded-lg p-6 mb-6 border border-emerald-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             {/* View Mode Toggle */}
-{/* View Mode Toggle */}
-<div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-  <div className="flex items-center gap-2">
-    <Calendar className="w-5 h-5 text-emerald-600 hidden md:block" />
-    
-  </div>
-  <div className="bg-emerald-100 rounded-lg p-1 flex flex-col sm:flex-row w-full sm:w-auto">
-    {["daily", "weekly", "monthly"].map((mode) => (
-      <button
-        key={mode}
-        onClick={() => setViewMode(mode)}
-        className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center sm:justify-start gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-400
+            {/* View Mode Toggle */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-emerald-600 hidden sm:block" />
+              </div>
+              <div className="bg-emerald-100 rounded-lg p-1 flex flex-col sm:flex-row w-full sm:w-auto">
+                {["daily", "weekly", "monthly"].map((mode) => (
+                  <button
+                    key={mode}
+                    onClick={() => setViewMode(mode)}
+                    className={`w-full sm:w-auto px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center sm:justify-start gap-2 focus:outline-none focus:ring-2 focus:ring-emerald-400
           ${
             viewMode === mode
               ? "bg-emerald-600 text-white"
               : "text-emerald-700 hover:text-emerald-800 hover:bg-emerald-200"
           }
         `}
-      >
-        {mode === "daily" && <Clock className="w-4 h-4" />}
-        {mode === "weekly" && <BarChart3 className="w-4 h-4" />}
-        {mode === "monthly" && <TrendingUp className="w-4 h-4" />}
-        {mode.charAt(0).toUpperCase() + mode.slice(1)}
-      </button>
-    ))}
-  </div>
-</div>
+                  >
+                    {mode === "daily" && <Clock className="w-4 h-4" />}
+                    {mode === "weekly" && <BarChart3 className="w-4 h-4" />}
+                    {mode === "monthly" && <TrendingUp className="w-4 h-4" />}
+                    {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                  </button>
+                ))}
+              </div>
+            </div>
 
+            {/* Date Navigation */}
+            <div className="flex items-center justify-between bg-emerald-100 rounded-lg px-3 py-2 w-full sm:w-auto">
+              {/* Left Arrow */}
+              <button
+                onClick={() => navigateDate(-1)}
+                className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                <ChevronLeft className="w-5 h-5 text-emerald-600" />
+              </button>
 
-           {/* Date Navigation */}
-<div className="flex items-center justify-between bg-emerald-100 rounded-lg px-3 py-2 w-full sm:w-auto">
-  {/* Left Arrow */}
-  <button
-    onClick={() => navigateDate(-1)}
-    className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
-  >
-    <ChevronLeft className="w-5 h-5 text-emerald-600" />
-  </button>
+              {/* Centered Date Text */}
+              <span className="flex-1 text-center font-medium text-emerald-800 px-4">
+                {formatDateRange()}
+              </span>
 
-  {/* Centered Date Text */}
-  <span className="flex-1 text-center font-medium text-emerald-800 px-4">
-    {formatDateRange()}
-  </span>
-
-  {/* Right Arrow */}
-  <button
-    onClick={() => navigateDate(1)}
-    className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
-  >
-    <ChevronRight className="w-5 h-5 text-emerald-600" />
-  </button>
-</div>
-
+              {/* Right Arrow */}
+              <button
+                onClick={() => navigateDate(1)}
+                className="p-2 rounded-full border border-emerald-300 bg-white hover:bg-emerald-50 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              >
+                <ChevronRight className="w-5 h-5 text-emerald-600" />
+              </button>
+            </div>
 
             {/* Search */}
             <div className="flex items-center gap-2">
-              <div className="relative">
+              <div className="relative w-full sm:w-auto">
                 <Search className="w-4 h-4 absolute left-3 top-3 text-emerald-600" />
                 <input
                   type="text"
                   placeholder="Search..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-4 py-2 border border-emerald-200 rounded-full focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white text-emerald-800 w-56"
+                  className="pl-10 pr-4 py-2 border border-emerald-200 rounded-full focus:ring-2 focus:ring-emerald-400 focus:border-transparent bg-white text-emerald-800 w-full md:w-56"
                 />
               </div>
             </div>
@@ -483,57 +480,100 @@ export default function UserHome() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg p-6 flex items-center gap-4 border border-emerald-200">
-            <div className="p-3 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Eye className="w-7 h-7 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-base text-emerald-700 font-semibold">
-                Total Images
+        <div className="mb-6">
+          {/* Mobile 4-column icon grid */}
+          <div className="grid grid-cols-4 gap-2 sm:hidden">
+            <div className="flex flex-col items-center rounded-xl border border-emerald-200 bg-white p-2 text-center shadow-sm">
+              <Eye className="h-6 w-6 text-emerald-600" />
+              <p className="text-xs font-medium text-emerald-700 leading-tight mt-1">
+                Images
               </p>
-              <p className="text-3xl font-bold text-emerald-800">
+              <p className="text-lg font-bold text-emerald-800 mt-0.5">
                 {stats.totalImages}
               </p>
             </div>
-          </div>
-          <div className="bg-white rounded-lg p-6 flex items-center gap-4 border border-emerald-200">
-            <div className="p-3 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Apple className="w-7 h-7 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-base text-emerald-700 font-semibold">
-                Food Items
+            <div className="flex flex-col items-center rounded-xl border border-emerald-200 bg-white p-2 text-center shadow-sm">
+              <Apple className="h-6 w-6 text-emerald-600" />
+              <p className="text-xs font-medium text-emerald-700 leading-tight mt-1">
+                Foods
               </p>
-              <p className="text-3xl font-bold text-emerald-800">
+              <p className="text-lg font-bold text-emerald-800 mt-0.5">
                 {stats.foodImages}
               </p>
             </div>
-          </div>
-          <div className="bg-white rounded-lg p-6 flex items-center gap-4 border border-emerald-200">
-            <div className="p-3 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Flame className="w-7 h-7 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-base text-emerald-700 font-semibold">
-                Total Calories
+            <div className="flex flex-col items-center rounded-xl border border-emerald-200 bg-white p-2 text-center shadow-sm">
+              <Flame className="h-6 w-6 text-emerald-600" />
+              <p className="text-xs font-medium text-emerald-700 leading-tight mt-1">
+                Calories
               </p>
-              <p className="text-3xl font-bold text-emerald-800">
+              <p className="text-lg font-bold text-emerald-800 mt-0.5">
                 {stats.totalCalories}
               </p>
             </div>
-          </div>
-          <div className="bg-white rounded-lg p-6 flex items-center gap-4 border border-emerald-200">
-            <div className="p-3 bg-emerald-100 rounded-lg flex items-center justify-center">
-              <Target className="w-7 h-7 text-emerald-600" />
-            </div>
-            <div>
-              <p className="text-base text-emerald-700 font-semibold">
-                Avg Calories
+            <div className="flex flex-col items-center rounded-xl border border-emerald-200 bg-white p-2 text-center shadow-sm">
+              <Target className="h-6 w-6 text-emerald-600" />
+              <p className="text-xs font-medium text-emerald-700 leading-tight mt-1">
+                Avg Cal
               </p>
-              <p className="text-3xl font-bold text-emerald-800">
+              <p className="text-lg font-bold text-emerald-800 mt-0.5">
                 {stats.avgCalories}
               </p>
+            </div>
+          </div>
+
+          {/* Desktop grid layout */}
+          <div className="hidden sm:grid grid-cols-4 gap-4">
+            <div className="flex items-center gap-4 rounded-lg border border-emerald-200 bg-white p-6">
+              <div className="flex items-center justify-center rounded-2xl border border-emerald-200 p-3">
+                <Eye className="h-7 w-7 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-emerald-700">
+                  Total Images
+                </p>
+                <p className="text-3xl font-bold text-emerald-800">
+                  {stats.totalImages}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 rounded-lg border border-emerald-200 bg-white p-6">
+              <div className="flex items-center justify-center rounded-2xl border border-emerald-200 p-3">
+                <Apple className="h-7 w-7 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-emerald-700">
+                  Food Items
+                </p>
+                <p className="text-3xl font-bold text-emerald-800">
+                  {stats.foodImages}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 rounded-lg border border-emerald-200 bg-white p-6">
+              <div className="flex items-center justify-center rounded-2xl border border-emerald-200 p-3">
+                <Flame className="h-7 w-7 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-emerald-700">
+                  Total Calories
+                </p>
+                <p className="text-3xl font-bold text-emerald-800">
+                  {stats.totalCalories}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-4 rounded-lg border border-emerald-200 bg-white p-6">
+              <div className="flex items-center justify-center rounded-2xl border border-emerald-200 p-3">
+                <Target className="h-7 w-7 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-base font-semibold text-emerald-700">
+                  Avg Calories
+                </p>
+                <p className="text-3xl font-bold text-emerald-800">
+                  {stats.avgCalories}
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -552,11 +592,11 @@ export default function UserHome() {
             ? filteredImages.map((img) => (
                 <div
                   key={img.id}
-                  className="bg-white rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden md:h-62"
+                  className="bg-white rounded-lg shadow hover:shadow-md transition-shadow overflow-hidden sm:h-62"
                 >
-                  <div className="md:flex h-full">
+                  <div className="sm:flex h-full">
                     {/* Image */}
-                    <div className="md:w-1/3 h-24 md:h-full">
+                    <div className="sm:w-1/3 h-24 sm:h-full">
                       <img
                         src={img.file_url}
                         alt={img.original_filename}
@@ -564,7 +604,7 @@ export default function UserHome() {
                       />
                     </div>
                     {/* Details */}
-                    <div className="md:w-2/3 p-3 flex flex-col justify-between h-full">
+                    <div className="sm:w-2/3 p-3 flex flex-col justify-between h-full">
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <h3 className="text-base font-semibold text-gray-800 break-words flex items-center gap-1">
@@ -601,7 +641,7 @@ export default function UserHome() {
                         </div>
                         {img.analysis ? (
                           <>
-                            <p className="hidden md:block text-xs text-gray-600 mb-2 line-clamp-2">
+                            <p className="hidden sm:block text-xs text-gray-600 mb-2 line-clamp-2">
                               {img.analysis.description}
                             </p>
                             {/* Food Items */}
@@ -728,7 +768,7 @@ export default function UserHome() {
                 </div>
               ))
             : !loading && (
-                <div className="text-center py-12">
+                <div className="hidden sm:block text-center py-12">
                   <div className="w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Image className="w-12 h-12 text-emerald-600" />
                   </div>
@@ -741,6 +781,86 @@ export default function UserHome() {
                   </p>
                 </div>
               )}
+        </div>
+        {/*Mobile Upload Section */}
+        <div className="block mt-2 sm:hidden mb-6">
+          {!file ? (
+            <label htmlFor="image-upload" className="block cursor-pointer">
+              <div className="group border-2 border-dashed border-emerald-300 rounded-lg p-14 text-center bg-white  transition-colors duration-300">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setFile(e.target.files[0])}
+                  className="hidden"
+                  id="image-upload"
+                  disabled={uploading}
+                />
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:scale-120">
+                    <Upload className="w-12 h-12 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-emerald-800 mb-2">
+                      Upload Food Image for Analysis
+                    </p>
+                    <p className="text-emerald-700 mb-2 text-base">
+                      Click or drag and drop your image here
+                    </p>
+                    <p className="text-sm text-emerald-600">
+                      Supports JPG, PNG (max 10MB)
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </label>
+          ) : (
+            <div className="space-y-6">
+              <div className="relative group w-full max-w-md mx-auto rounded-lg overflow-hidden">
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt="Selected food"
+                  className="w-full h-auto object-cover rounded-lg"
+                />
+                <div className="absolute bottom-0 left-0 right-0 bg-black/60 p-4 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button
+                    onClick={() => setFile(null)}
+                    className="bg-red-600 hover:bg-red-700 text-white rounded-full p-2 transition-colors duration-200"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              </div>
+              <div className="text-center">
+                <input
+                  type="text"
+                  placeholder="Description ( Optional )"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="w-full max-w-md mx-auto mt-2 px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 text-emerald-800 bg-white"
+                  disabled={uploading}
+                />
+              </div>
+              <div className="text-center">
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading || !file}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 rounded-lg font-semibold w-full max-w-md mx-auto flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent mr-2" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 mr-2" />
+                      Upload & Analyze
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -11,7 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import VerifyEmail from "./pages/VerifyEmail";
 import GoogleCallback from "./pages/GoogleCallback";
 import GoogleSuccess from "./pages/GoogleSuccess";
-import UserInfo from "./pages/UserInfo";
+import HealthInfo from "./pages/HealthInfo";
 import { useSelector } from "react-redux";
 
 export default function App() {
@@ -37,10 +37,10 @@ export default function App() {
             }
           />
           <Route
-            path="/user-info"
+            path="/health-info"
             element={
               <ProtectedRoute>
-                <UserInfo />
+                <HealthInfo />
               </ProtectedRoute>
             }
           />
