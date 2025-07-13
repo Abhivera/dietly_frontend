@@ -28,6 +28,11 @@ export default function Navbar() {
     { path: "/", label: "Home", icon: <HomeIcon className="w-4 h-4 mr-2" /> },
     ...(token
       ? [
+        {
+          path: "/calorie-tracker",
+          label: "Calorie Tracker",
+          icon: <HeartPulse className="w-4 h-4 mr-2" />,
+        },
           {
             path: "/health-info",
             label: "Health Info",

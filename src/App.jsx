@@ -12,7 +12,9 @@ import VerifyEmail from "./pages/VerifyEmail";
 import GoogleCallback from "./pages/GoogleCallback";
 import GoogleSuccess from "./pages/GoogleSuccess";
 import HealthInfo from "./pages/HealthInfo";
+import UserCaloriesTracker from "./pages/UserCalories";
 import { useSelector } from "react-redux";
+
 
 export default function App() {
   const { token } = useSelector((state) => state.auth);
@@ -49,6 +51,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <MealSummary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/calorie-tracker"
+            element={
+              <ProtectedRoute>
+                <UserCaloriesTracker />
               </ProtectedRoute>
             }
           />

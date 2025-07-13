@@ -218,8 +218,19 @@ export default function HealthInfo() {
           </p>
         </div>
 
-        {/* If missing required fields, show special message and button */}
-        {isMissingRequired && !editMode ? (
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[300px]">
+            <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-8 mb-6 max-w-md w-full text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+              <h2 className="text-2xl font-bold text-emerald-700 mb-2">
+                Loading Health Profile
+              </h2>
+              <p className="text-emerald-600">
+                Please wait while we fetch your information...
+              </p>
+            </div>
+          </div>
+        ) : isMissingRequired && !editMode ? (
           <div className="flex flex-col items-center justify-center min-h-[300px]">
             <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-8 mb-6 max-w-md w-full text-center">
               <h2 className="text-2xl font-bold text-emerald-700 mb-2">
@@ -336,7 +347,7 @@ export default function HealthInfo() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
+                      <label className="text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
                         <Target className="w-4 h-4" />
                         Goal Weight (kg)
                       </label>
@@ -492,7 +503,7 @@ export default function HealthInfo() {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
+                            <label className="text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
                               <Target className="w-4 h-4" />
                               Goal Weight (kg)
                             </label>
