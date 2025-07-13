@@ -7,6 +7,7 @@ import {
   Info,
   Pencil,
   Ruler,
+  Settings,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
@@ -14,6 +15,7 @@ import * as userApi from "../api/user";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getMealSummary } from "../api/meal";
+import * as userCaloriesApi from "../api/userCalories";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
@@ -22,18 +24,36 @@ export default function HealthInfo() {
   const [editMode, setEditMode] = useState(false);
   const [originalForm, setOriginalForm] = useState(null);
   const [mealSummary, setMealSummary] = useState(null);
+  const [userCalories, setUserCalories] = useState([]);
+  const [units, setUnits] = useState({
+    weight: "kg", // 'kg' or 'lbs'
+    height: "cm", // 'cm' or 'ft'
+  });
 
   useEffect(() => {
     const fetchUser = async () => {
       if (token) {
         setLoading(true);
         const userData = await userApi.getUser(token);
+        // Convert from kg/cm to current units
         const userForm = {
           gender: userData.gender || null,
           age: userData.age || null,
-          weight: userData.weight || null,
-          height: userData.height || null,
-          goal_weight: userData.goal_weight || null,
+          weight: userData.weight
+            ? units.weight === "lbs"
+              ? Math.round(userData.weight * 2.20462 * 100) / 100
+              : Math.round(userData.weight * 100) / 100
+            : null,
+          height: userData.height
+            ? units.height === "ft"
+              ? Math.round((userData.height / 30.48) * 100) / 100
+              : Math.round(userData.height * 100) / 100
+            : null,
+          goal_weight: userData.goal_weight
+            ? units.weight === "lbs"
+              ? Math.round(userData.goal_weight * 2.20462 * 100) / 100
+              : Math.round(userData.goal_weight * 100) / 100
+            : null,
         };
         setForm(userForm);
         setOriginalForm(userForm);
@@ -41,16 +61,25 @@ export default function HealthInfo() {
       }
     };
     fetchUser();
-  }, [token]);
+  }, [token, units.weight, units.height]);
 
   useEffect(() => {
-    const fetchMealSummary = async () => {
+    const fetchData = async () => {
       if (token) {
-        const summary = await getMealSummary(token);
-        setMealSummary(summary);
+        try {
+          // Fetch meal summary
+          const summary = await getMealSummary(token);
+          setMealSummary(summary);
+
+          // Fetch user calories (burned calories from activities)
+          const caloriesData = await userCaloriesApi.getUserCalories(token);
+          setUserCalories(caloriesData);
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
       }
     };
-    fetchMealSummary();
+    fetchData();
   }, [token]);
 
   const [form, setForm] = useState({
@@ -62,11 +91,14 @@ export default function HealthInfo() {
   });
   const [loading, setLoading] = useState(false);
 
-  // BMI calculation
+  // BMI calculation (always uses kg and cm internally)
   const calculateBMI = (weight, height) => {
     if (!weight || !height) return null;
-    const heightInMeters = height / 100;
-    return (weight / (heightInMeters * heightInMeters)).toFixed(1);
+    // Convert to kg and cm if needed
+    const weightInKg = units.weight === "lbs" ? weight / 2.20462 : weight;
+    const heightInCm = units.height === "ft" ? height * 30.48 : height;
+    const heightInMeters = heightInCm / 100;
+    return (weightInKg / (heightInMeters * heightInMeters)).toFixed(1);
   };
 
   // BMI category
@@ -97,18 +129,46 @@ export default function HealthInfo() {
     };
   };
 
-  // Recommended weight range
+  // Recommended weight range (always returns in current weight unit)
   const getRecommendedWeightRange = (height) => {
     if (!height) return null;
-    const heightInMeters = height / 100;
-    const minWeight = (18.5 * heightInMeters * heightInMeters).toFixed(1);
-    const maxWeight = (24.9 * heightInMeters * heightInMeters).toFixed(1);
+    // Convert height to cm for calculation
+    const heightInCm = units.height === "ft" ? height * 30.48 : height;
+    const heightInMeters = heightInCm / 100;
+    const minWeightKg = (18.5 * heightInMeters * heightInMeters).toFixed(1);
+    const maxWeightKg = (24.9 * heightInMeters * heightInMeters).toFixed(1);
+
+    // Convert to current weight unit
+    const minWeight =
+      units.weight === "lbs"
+        ? Math.round(minWeightKg * 2.20462 * 100) / 100
+        : minWeightKg;
+    const maxWeight =
+      units.weight === "lbs"
+        ? Math.round(maxWeightKg * 2.20462 * 100) / 100
+        : maxWeightKg;
+
     return { min: minWeight, max: maxWeight };
   };
 
-  const getWeightPrediction = (caloriesPerDay = 0) => {
+  // Calculate total calories burned from activities
+  const totalCaloriesBurned = userCalories.reduce((total, entry) => {
+    return (
+      total +
+      entry.calories_burned.reduce((dayTotal, activity) => {
+        return dayTotal + parseInt(activity.calories) || 0;
+      }, 0)
+    );
+  }, 0);
+
+  // Calculate net calories (consumed - burned)
+  const netCalories = mealSummary
+    ? mealSummary.total_calories - totalCaloriesBurned
+    : 0;
+
+  const getWeightPrediction = (netCaloriesPerDay = 0) => {
     const kcalPerKg = 7700;
-    const daily = caloriesPerDay / kcalPerKg;
+    const daily = netCaloriesPerDay / kcalPerKg;
     return {
       daily: daily.toFixed(2),
       weekly: (daily * 7).toFixed(2),
@@ -117,9 +177,8 @@ export default function HealthInfo() {
     };
   };
 
-  const weightPrediction = mealSummary
-    ? getWeightPrediction(mealSummary.total_calories)
-    : null;
+  const weightPrediction =
+    netCalories !== 0 ? getWeightPrediction(netCalories) : null;
 
   const handleEdit = () => {
     setEditMode(true);
@@ -131,7 +190,25 @@ export default function HealthInfo() {
   const handleSubmitFormik = async (values) => {
     setLoading(true);
     try {
-      const res = await userApi.updateUser(token, values);
+      // Convert values to kg and cm for API
+      const apiValues = {
+        ...values,
+        weight:
+          units.weight === "lbs"
+            ? Math.round((values.weight / 2.20462) * 100) / 100
+            : Math.round(values.weight * 100) / 100,
+        height:
+          units.height === "ft"
+            ? Math.round(values.height * 30.48 * 100) / 100
+            : Math.round(values.height * 100) / 100,
+        goal_weight: values.goal_weight
+          ? units.weight === "lbs"
+            ? Math.round((values.goal_weight / 2.20462) * 100) / 100
+            : Math.round(values.goal_weight * 100) / 100
+          : null,
+      };
+
+      const res = await userApi.updateUser(token, apiValues);
       if (res && !res.detail) {
         toast.success("User info updated successfully.");
         setEditMode(false);
@@ -180,18 +257,23 @@ export default function HealthInfo() {
       .typeError("Age must be a number")
       .required("Age is required")
       .min(1, "Age must be at least 1")
-      .max(150, "Age must be less than 150"),
+      .max(150, "Age must be less than 150")
+      .integer("Age must be a whole number"),
     weight: Yup.number()
       .typeError("Weight must be a number")
       .required("Weight is required")
-      .min(1, "Weight must be at least 1"),
+      .min(0.1, "Weight must be at least 0.1")
+      .max(1000, "Weight must be less than 1000"),
     height: Yup.number()
       .typeError("Height must be a number")
       .required("Height is required")
-      .min(1, "Height must be at least 1"),
+      .min(0.1, "Height must be at least 0.1")
+      .max(1000, "Height must be less than 1000"),
     goal_weight: Yup.number()
       .typeError("Goal weight must be a number")
-      .nullable(),
+      .nullable()
+      .min(0.1, "Goal weight must be at least 0.1")
+      .max(1000, "Goal weight must be less than 1000"),
   });
 
   return (
@@ -268,6 +350,83 @@ export default function HealthInfo() {
               >
                 {({ isSubmitting }) => (
                   <Form className="space-y-6">
+                    {/* Unit Settings */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Settings className="w-4 h-4 text-gray-600" />
+                        <h4 className="text-sm font-semibold text-gray-700">
+                          Units
+                        </h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Weight Unit
+                          </label>
+                          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, weight: "kg" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.weight === "kg"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              kg
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, weight: "lbs" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.weight === "lbs"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              lbs
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Height Unit
+                          </label>
+                          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, height: "cm" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.height === "cm"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              cm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, height: "ft" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.height === "ft"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              ft
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-emerald-700 mb-2">
@@ -311,7 +470,7 @@ export default function HealthInfo() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                          Weight (kg)
+                          Weight ({units.weight})
                         </label>
                         <Field
                           type="number"
@@ -319,7 +478,7 @@ export default function HealthInfo() {
                           className="w-full p-3 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200 text-sm"
                           placeholder="Weight"
                           min="0"
-                          step="0.1"
+                          step="any"
                         />
                         <ErrorMessage
                           name="weight"
@@ -329,7 +488,7 @@ export default function HealthInfo() {
                       </div>
                       <div>
                         <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                          Height (cm)
+                          Height ({units.height})
                         </label>
                         <Field
                           type="number"
@@ -337,7 +496,7 @@ export default function HealthInfo() {
                           className="w-full p-3 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200 text-sm"
                           placeholder="Height"
                           min="0"
-                          step="0.1"
+                          step="any"
                         />
                         <ErrorMessage
                           name="height"
@@ -349,7 +508,7 @@ export default function HealthInfo() {
                     <div>
                       <label className="text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
                         <Target className="w-4 h-4" />
-                        Goal Weight (kg)
+                        Goal Weight ({units.weight})
                       </label>
                       <Field
                         type="number"
@@ -357,7 +516,7 @@ export default function HealthInfo() {
                         className="w-full p-3 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200 text-sm"
                         placeholder="Goal weight"
                         min="0"
-                        step="0.1"
+                        step="any"
                       />
                       <ErrorMessage
                         name="goal_weight"
@@ -391,9 +550,19 @@ export default function HealthInfo() {
         ) : (
           <>
             {/* Cards Grid Layout */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 justify-items-center">
+            <div
+              className={`${
+                editMode
+                  ? "flex justify-center"
+                  : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 justify-items-center"
+              }`}
+            >
               {/* Personal Information Card */}
-              <div className="w-full sm:w-[250px] flex flex-col">
+              <div
+                className={`${
+                  editMode ? "w-full max-w-2xl" : "w-full sm:w-[250px]"
+                } flex flex-col`}
+              >
                 <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
                   <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-emerald-800 flex items-center gap-2">
@@ -424,6 +593,95 @@ export default function HealthInfo() {
                     >
                       {({ isSubmitting }) => (
                         <Form className="space-y-6">
+                          {/* Unit Settings */}
+                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                              <Settings className="w-4 h-4 text-gray-600" />
+                              <h4 className="text-sm font-semibold text-gray-700">
+                                Units
+                              </h4>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">
+                                  Weight Unit
+                                </label>
+                                <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setUnits((prev) => ({
+                                        ...prev,
+                                        weight: "kg",
+                                      }))
+                                    }
+                                    className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                      units.weight === "kg"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    kg
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setUnits((prev) => ({
+                                        ...prev,
+                                        weight: "lbs",
+                                      }))
+                                    }
+                                    className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                      units.weight === "lbs"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    lbs
+                                  </button>
+                                </div>
+                              </div>
+                              <div>
+                                <label className="block text-xs text-gray-600 mb-1">
+                                  Height Unit
+                                </label>
+                                <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setUnits((prev) => ({
+                                        ...prev,
+                                        height: "cm",
+                                      }))
+                                    }
+                                    className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                      units.height === "cm"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    cm
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setUnits((prev) => ({
+                                        ...prev,
+                                        height: "ft",
+                                      }))
+                                    }
+                                    className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                      units.height === "ft"
+                                        ? "bg-emerald-600 text-white"
+                                        : "bg-white text-gray-700 hover:bg-gray-50"
+                                    }`}
+                                  >
+                                    ft
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-semibold text-emerald-700 mb-2">
@@ -467,7 +725,7 @@ export default function HealthInfo() {
                           <div className="grid grid-cols-2 gap-4">
                             <div>
                               <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                                Weight (kg)
+                                Weight ({units.weight})
                               </label>
                               <Field
                                 type="number"
@@ -475,7 +733,7 @@ export default function HealthInfo() {
                                 className="w-full p-3 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200 text-sm"
                                 placeholder="Weight"
                                 min="0"
-                                step="0.1"
+                                step="any"
                               />
                               <ErrorMessage
                                 name="weight"
@@ -485,7 +743,7 @@ export default function HealthInfo() {
                             </div>
                             <div>
                               <label className="block text-sm font-semibold text-emerald-700 mb-2">
-                                Height (cm)
+                                Height ({units.height})
                               </label>
                               <Field
                                 type="number"
@@ -493,7 +751,7 @@ export default function HealthInfo() {
                                 className="w-full p-3 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200 text-sm"
                                 placeholder="Height"
                                 min="0"
-                                step="0.1"
+                                step="any"
                               />
                               <ErrorMessage
                                 name="height"
@@ -505,7 +763,7 @@ export default function HealthInfo() {
                           <div>
                             <label className="text-sm font-semibold text-emerald-700 mb-2 flex items-center gap-2">
                               <Target className="w-4 h-4" />
-                              Goal Weight (kg)
+                              Goal Weight ({units.weight})
                             </label>
                             <Field
                               type="number"
@@ -513,7 +771,7 @@ export default function HealthInfo() {
                               className="w-full p-3 border border-emerald-200 rounded-lg focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 transition-colors duration-200 text-sm"
                               placeholder="Goal weight"
                               min="0"
-                              step="0.1"
+                              step="any"
                             />
                             <ErrorMessage
                               name="goal_weight"
@@ -568,7 +826,7 @@ export default function HealthInfo() {
                       <div className="grid grid-cols-2 gap-4">
                         <div>
                           <div className="text-xs text-emerald-700 font-semibold mb-1">
-                            Weight (kg)
+                            Weight ({units.weight})
                           </div>
                           <div className="text-sm text-gray-900 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
                             {form.weight || "-"}
@@ -576,7 +834,7 @@ export default function HealthInfo() {
                         </div>
                         <div>
                           <div className="text-xs text-emerald-700 font-semibold mb-1">
-                            Height (cm)
+                            Height ({units.height})
                           </div>
                           <div className="text-sm text-gray-900 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
                             {form.height || "-"}
@@ -586,7 +844,7 @@ export default function HealthInfo() {
                       <div>
                         <div className="text-xs text-emerald-700 font-semibold mb-1 flex items-center gap-2">
                           <Target className="w-4 h-4" />
-                          Goal Weight (kg)
+                          Goal Weight ({units.weight})
                         </div>
                         <div className="text-sm text-gray-900 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
                           {form.goal_weight || "-"}
@@ -598,7 +856,7 @@ export default function HealthInfo() {
               </div>
 
               {/* BMI Card */}
-              {currentBMI && (
+              {!editMode && currentBMI && (
                 <div className="w-full sm:w-[250px] flex flex-col">
                   <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
                     <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
@@ -653,7 +911,7 @@ export default function HealthInfo() {
               )}
 
               {/* Weight Recommendations */}
-              {recommendedRange && (
+              {!editMode && recommendedRange && (
                 <div className="w-full sm:w-[250px] flex flex-col">
                   <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
                     <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
@@ -667,7 +925,8 @@ export default function HealthInfo() {
                           Healthy Range
                         </div>
                         <div className="text-lg font-bold text-emerald-800">
-                          {recommendedRange.min} - {recommendedRange.max} kg
+                          {recommendedRange.min} - {recommendedRange.max}{" "}
+                          {units.weight}
                         </div>
                       </div>
 
@@ -677,7 +936,7 @@ export default function HealthInfo() {
                             Current Weight
                           </div>
                           <div className="text-lg font-bold text-gray-800">
-                            {form.weight} kg
+                            {form.weight} {units.weight}
                           </div>
                         </div>
                       )}
@@ -688,7 +947,7 @@ export default function HealthInfo() {
                             Goal Weight
                           </div>
                           <div className="text-lg font-bold text-blue-800">
-                            {form.goal_weight} kg
+                            {form.goal_weight} {units.weight}
                           </div>
                           <div className="text-sm text-blue-600 mt-1">
                             BMI: {goalBMI}
@@ -701,7 +960,7 @@ export default function HealthInfo() {
               )}
 
               {/* Weight Prediction Card */}
-              {weightPrediction && (
+              {!editMode && weightPrediction && (
                 <div className="w-full sm:w-[250px] flex flex-col">
                   <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
                     <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
@@ -709,15 +968,25 @@ export default function HealthInfo() {
                       Weight Prediction
                     </h3>
 
-                    {/* Current Weight Reference */}
-                    <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg mb-4">
-                      <div className="text-sm text-emerald-700 font-medium mb-1">
-                        Current Weight
+                    {/* Net Calories Info */}
+                    {mealSummary && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <div className="text-sm text-blue-700 font-medium mb-1">
+                          Net Calories (Consumed - Burned)
+                        </div>
+                        <div
+                          className={`text-lg font-bold ${
+                            netCalories >= 0 ? "text-blue-800" : "text-red-600"
+                          }`}
+                        >
+                          {netCalories} cal/day
+                        </div>
+                        <div className="text-xs text-blue-600 mt-1">
+                          Consumed: {mealSummary.total_calories} | Burned:{" "}
+                          {totalCaloriesBurned}
+                        </div>
                       </div>
-                      <div className="text-xl font-bold text-emerald-800">
-                        {form.weight} kg
-                      </div>
-                    </div>
+                    )}
 
                     {/* Predictions - 2x3 Grid Layout */}
                     <div className="space-y-2 flex-1">
@@ -732,10 +1001,17 @@ export default function HealthInfo() {
                               parseFloat(form.weight) +
                               parseFloat(weightPrediction.daily)
                             ).toFixed(1)}{" "}
-                            kg
+                            {units.weight}
                           </div>
-                          <div className="text-xs text-emerald-600">
-                            +{weightPrediction.daily}
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.daily) >= 0
+                                ? "text-emerald-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.daily) >= 0 ? "+" : ""}
+                            {weightPrediction.daily}
                           </div>
                         </div>
 
@@ -748,10 +1024,19 @@ export default function HealthInfo() {
                               parseFloat(form.weight) +
                               parseFloat(weightPrediction.weekly)
                             ).toFixed(1)}{" "}
-                            kg
+                            {units.weight}
                           </div>
-                          <div className="text-xs text-teal-600">
-                            +{weightPrediction.weekly}
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.weekly) >= 0
+                                ? "text-teal-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.weekly) >= 0
+                              ? "+"
+                              : ""}
+                            {weightPrediction.weekly}
                           </div>
                         </div>
                       </div>
@@ -767,10 +1052,19 @@ export default function HealthInfo() {
                               parseFloat(form.weight) +
                               parseFloat(weightPrediction.monthly)
                             ).toFixed(1)}{" "}
-                            kg
+                            {units.weight}
                           </div>
-                          <div className="text-xs text-cyan-600">
-                            +{weightPrediction.monthly}
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.monthly) >= 0
+                                ? "text-cyan-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.monthly) >= 0
+                              ? "+"
+                              : ""}
+                            {weightPrediction.monthly}
                           </div>
                         </div>
 
@@ -783,10 +1077,19 @@ export default function HealthInfo() {
                               parseFloat(form.weight) +
                               parseFloat(weightPrediction.yearly)
                             ).toFixed(1)}{" "}
-                            kg
+                            {units.weight}
                           </div>
-                          <div className="text-xs text-blue-600">
-                            +{weightPrediction.yearly}
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.yearly) >= 0
+                                ? "text-blue-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.yearly) >= 0
+                              ? "+"
+                              : ""}
+                            {weightPrediction.yearly}
                           </div>
                         </div>
                       </div>
@@ -796,7 +1099,7 @@ export default function HealthInfo() {
                     <div className="mt-2 border-t border-emerald-100">
                       <div className="flex items-center gap-2 text-xs text-emerald-600">
                         <Info className="w-3 h-3" />
-                        <span>Based on daily calories (1kg ≈ 7700 kcal)</span>
+                        <span>Based on net calories (1kg ≈ 7700 kcal)</span>
                       </div>
                     </div>
                   </div>

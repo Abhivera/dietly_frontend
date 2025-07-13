@@ -15,6 +15,14 @@ export async function createUserCalories(token, data) {
   const responseData = await res.json();
 
   if (!res.ok) {
+    // Handle validation errors (array format)
+    if (Array.isArray(responseData.detail)) {
+      const errorMessages = responseData.detail
+        .map((error) => error.msg)
+        .join(", ");
+      throw new Error(errorMessages);
+    }
+    // Handle simple string errors
     throw new Error(responseData.detail || "Failed to create calorie entry");
   }
 
@@ -63,6 +71,14 @@ export async function updateUserCalories(token, caloriesId, data) {
   const responseData = await res.json();
 
   if (!res.ok) {
+    // Handle validation errors (array format)
+    if (Array.isArray(responseData.detail)) {
+      const errorMessages = responseData.detail
+        .map((error) => error.msg)
+        .join(", ");
+      throw new Error(errorMessages);
+    }
+    // Handle simple string errors
     throw new Error(responseData.detail || "Failed to update calorie entry");
   }
 

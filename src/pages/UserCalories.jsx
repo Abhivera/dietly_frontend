@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { Popconfirm } from "antd";
 import {
   Plus,
   Edit,
@@ -17,6 +18,8 @@ import {
   ChevronUp,
   Clock,
   Zap,
+  Calculator,
+  Edit3,
 } from "lucide-react";
 import {
   createUserCalories,
@@ -138,6 +141,30 @@ const Card = ({ children, className = "", onClick, hover = true }) => (
   </div>
 );
 
+const ToggleSwitch = ({ checked, onChange, label, description }) => (
+  <div className="flex items-center justify-between">
+    <div className="flex-1">
+      <label className="text-sm font-medium text-gray-700">{label}</label>
+      {description && (
+        <p className="text-xs text-gray-500 mt-1">{description}</p>
+      )}
+    </div>
+    <button
+      type="button"
+      onClick={onChange}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 ${
+        checked ? "bg-emerald-600" : "bg-gray-200"
+      }`}
+    >
+      <span
+        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+          checked ? "translate-x-6" : "translate-x-1"
+        }`}
+      />
+    </button>
+  </div>
+);
+
 const Button = ({
   children,
   onClick,
@@ -219,24 +246,34 @@ export default function UserCaloriesTracker() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [isFormCollapsed, setIsFormCollapsed] = useState(false);
 
-  // Enhanced form state with validation
+  // Enhanced form state with validation and auto-calculation toggle
   const [formData, setFormData] = useState({
     activityDate: getTodayDateString(),
     activityName: "running",
     activityValue: "",
     bodyWeight: 70,
+    manualCalories: "",
+    isAutoCalculate: true,
   });
   const [formErrors, setFormErrors] = useState({});
   const [activities, setActivities] = useState([]);
 
   const calculatedCalories = useMemo(
     () =>
-      calculateCalories(
-        formData.activityName,
-        Number(formData.activityValue),
-        formData.bodyWeight
-      ),
-    [formData.activityName, formData.activityValue, formData.bodyWeight]
+      formData.isAutoCalculate
+        ? calculateCalories(
+            formData.activityName,
+            Number(formData.activityValue),
+            formData.bodyWeight
+          )
+        : Number(formData.manualCalories) || 0,
+    [
+      formData.activityName,
+      formData.activityValue,
+      formData.bodyWeight,
+      formData.isAutoCalculate,
+      formData.manualCalories,
+    ]
   );
 
   const fetchUserData = useCallback(async () => {
@@ -296,6 +333,8 @@ export default function UserCaloriesTracker() {
       activityName: "running",
       activityValue: "",
       bodyWeight: userData?.weight || 70,
+      manualCalories: "",
+      isAutoCalculate: true,
     });
     setFormErrors({});
     setActivities([]);
@@ -373,6 +412,8 @@ export default function UserCaloriesTracker() {
         activityName: firstActivity.activity_name || "running",
         activityValue: "",
         bodyWeight: userData?.weight || 70,
+        manualCalories: "",
+        isAutoCalculate: true,
       });
 
       const existingActivities = entry.calories_burned.map(
@@ -395,15 +436,13 @@ export default function UserCaloriesTracker() {
   );
 
   const handleDelete = async (id) => {
-    if (window.confirm("Are you sure you want to delete this entry?")) {
-      try {
-        await deleteUserCalories(token, id);
-        await fetchData();
-        toast.success("Activity entry deleted successfully!");
-      } catch (err) {
-        toast.error(err.message || "Failed to delete entry. Please try again.");
-        console.error("Delete error:", err);
-      }
+    try {
+      await deleteUserCalories(token, id);
+      await fetchData();
+      toast.success("Activity entry deleted successfully!");
+    } catch (err) {
+      toast.error(err.message || "Failed to delete entry. Please try again.");
+      console.error("Delete error:", err);
     }
   };
 
@@ -423,18 +462,38 @@ export default function UserCaloriesTracker() {
   const addActivity = () => {
     if (
       !formData.activityName ||
-      !formData.activityValue ||
-      Number(formData.activityValue) <= 0
+      (!formData.activityValue && formData.isAutoCalculate) ||
+      (formData.isAutoCalculate && Number(formData.activityValue) <= 0) ||
+      (!formData.isAutoCalculate &&
+        (!formData.manualCalories || Number(formData.manualCalories) <= 0))
     ) {
       setFormErrors({
         activityName: !formData.activityName
           ? "Activity type is required"
           : null,
         activityValue:
-          !formData.activityValue || Number(formData.activityValue) <= 0
+          formData.isAutoCalculate &&
+          (!formData.activityValue || Number(formData.activityValue) <= 0)
             ? "Please enter a valid activity value"
             : null,
+        manualCalories:
+          !formData.isAutoCalculate &&
+          (!formData.manualCalories || Number(formData.manualCalories) <= 0)
+            ? "Please enter a valid calorie value"
+            : null,
       });
+      return;
+    }
+
+    // Check for duplicate activities
+    const isDuplicate = activities.some(
+      (activity) => activity.activity_name === formData.activityName
+    );
+
+    if (isDuplicate) {
+      toast.error(
+        "This activity type has already been added. Please choose a different activity or remove the existing one."
+      );
       return;
     }
 
@@ -442,7 +501,7 @@ export default function UserCaloriesTracker() {
       id: Date.now(),
       activity_name: formData.activityName,
       calories: calculatedCalories.toString(),
-      duration: formData.activityValue,
+      duration: formData.isAutoCalculate ? formData.activityValue : "",
       unit: ACTIVITIES[formData.activityName]?.unit || "minutes",
     };
 
@@ -452,6 +511,7 @@ export default function UserCaloriesTracker() {
       ...prev,
       activityName: "running",
       activityValue: "",
+      manualCalories: "",
     }));
     setFormErrors({});
   };
@@ -518,13 +578,15 @@ export default function UserCaloriesTracker() {
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 text-gray-800 p-2 sm:p-4 lg:p-6">
       <ToastContainer
         position="top-right"
-        autoClose={3000}
+        autoClose={4000}
         hideProgressBar={false}
         newestOnTop
         closeOnClick
         pauseOnFocusLoss
         draggable
         pauseOnHover
+        limit={3}
+        rtl={false}
       />
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -732,14 +794,22 @@ export default function UserCaloriesTracker() {
                           className={`w-full pl-10 sm:pl-12 border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                             formErrors.activityValue
                               ? "border-red-500"
-                              : "border-gray-300"
+                              : formData.isAutoCalculate
+                              ? "border-gray-300"
+                              : "border-gray-200 bg-gray-50"
                           }`}
-                          required
+                          required={formData.isAutoCalculate}
+                          disabled={!formData.isAutoCalculate}
                         />
                       </div>
                       {formErrors.activityValue && (
                         <p className="mt-1 text-sm text-red-600">
                           {formErrors.activityValue}
+                        </p>
+                      )}
+                      {!formData.isAutoCalculate && (
+                        <p className="mt-1 text-sm text-gray-500">
+                          Duration field is disabled in manual mode
                         </p>
                       )}
                     </div>
@@ -769,9 +839,12 @@ export default function UserCaloriesTracker() {
                           className={`w-full pl-10 sm:pl-12 border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                             formErrors.bodyWeight
                               ? "border-red-500"
-                              : "border-gray-300"
+                              : formData.isAutoCalculate
+                              ? "border-gray-300"
+                              : "border-gray-200 bg-gray-50"
                           }`}
-                          required
+                          required={formData.isAutoCalculate}
+                          disabled={!formData.isAutoCalculate}
                         />
                       </div>
                       {formErrors.bodyWeight && (
@@ -779,24 +852,86 @@ export default function UserCaloriesTracker() {
                           {formErrors.bodyWeight}
                         </p>
                       )}
+                      {!formData.isAutoCalculate && (
+                        <p className="mt-1 text-sm text-gray-500">
+                          Weight field is disabled in manual mode
+                        </p>
+                      )}
                     </div>
                   </div>
-                  {/* Enhanced Calorie Display */}
+                  {/* Enhanced Calorie Display with Toggle */}
                   <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-4 sm:p-6">
+                    <div className="mb-4">
+                      <ToggleSwitch
+                        checked={formData.isAutoCalculate}
+                        onChange={() => {
+                          setFormData((prev) => ({
+                            ...prev,
+                            isAutoCalculate: !prev.isAutoCalculate,
+                            manualCalories: !prev.isAutoCalculate
+                              ? ""
+                              : prev.manualCalories,
+                          }));
+                          // Clear relevant errors when switching modes
+                          setFormErrors((prev) => ({
+                            ...prev,
+                            activityValue: null,
+                            manualCalories: null,
+                          }));
+                        }}
+                        label="Auto-calculate calories"
+                        description={
+                          formData.isAutoCalculate
+                            ? "Calories are automatically calculated based on activity and weight"
+                            : "Enter calories manually"
+                        }
+                      />
+                    </div>
+
                     <div className="flex items-center justify-center space-x-4">
                       <div className="bg-emerald-100 p-2 sm:p-3 rounded-full">
-                        <Flame className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
+                        {formData.isAutoCalculate ? (
+                          <Calculator className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
+                        ) : (
+                          <Edit3 className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
+                        )}
                       </div>
                       <div className="text-center">
                         <p className="text-sm text-gray-600 mb-1">
-                          Estimated Calories Burned
+                          {formData.isAutoCalculate ? "Estimated" : "Manual"}{" "}
+                          Calories Burned
                         </p>
-                        <p className="text-3xl sm:text-4xl font-bold text-emerald-600">
-                          {calculatedCalories.toLocaleString()}
-                        </p>
+                        {formData.isAutoCalculate ? (
+                          <p className="text-3xl sm:text-4xl font-bold text-emerald-600">
+                            {calculatedCalories.toLocaleString()}
+                          </p>
+                        ) : (
+                          <div className="flex items-center justify-center space-x-2">
+                            <input
+                              type="number"
+                              min="0"
+                              step="1"
+                              value={formData.manualCalories}
+                              onChange={(e) =>
+                                handleInputChange(
+                                  "manualCalories",
+                                  e.target.value
+                                )
+                              }
+                              placeholder="Enter calories"
+                              className="text-3xl sm:text-4xl font-bold text-emerald-600 bg-transparent border-b-2 border-emerald-300 focus:border-emerald-500 focus:outline-none text-center w-32 sm:w-40"
+                            />
+                          </div>
+                        )}
                         <p className="text-sm text-gray-500">kcal</p>
                       </div>
                     </div>
+
+                    {!formData.isAutoCalculate && formErrors.manualCalories && (
+                      <p className="mt-2 text-sm text-red-600 text-center">
+                        {formErrors.manualCalories}
+                      </p>
+                    )}
                   </div>
 
                   {/* Add Activity Button */}
@@ -804,8 +939,12 @@ export default function UserCaloriesTracker() {
                     <Button
                       onClick={addActivity}
                       disabled={
-                        !formData.activityValue ||
-                        Number(formData.activityValue) <= 0
+                        (formData.isAutoCalculate &&
+                          (!formData.activityValue ||
+                            Number(formData.activityValue) <= 0)) ||
+                        (!formData.isAutoCalculate &&
+                          (!formData.manualCalories ||
+                            Number(formData.manualCalories) <= 0))
                       }
                       icon={Plus}
                       className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400 text-white transform hover:scale-105 active:scale-95"
@@ -970,13 +1109,31 @@ export default function UserCaloriesTracker() {
                           icon={Edit}
                           className="p-2"
                         />
-                        <Button
-                          onClick={() => handleDelete(entry.id)}
-                          variant="danger"
-                          size="sm"
-                          icon={Trash2}
-                          className="p-2"
-                        />
+                        <Popconfirm
+                          title="Delete Activity Entry"
+                          description="Are you sure you want to delete this activity entry? This action cannot be undone."
+                          onConfirm={() => handleDelete(entry.id)}
+                          okText="Yes, Delete"
+                          cancelText="Cancel"
+                          okType="danger"
+                          placement="bottom"
+                          trigger="click"
+                          showCancel={true}
+                          overlayStyle={{ zIndex: 1000 }}
+                          destroyTooltipOnHide={true}
+                          getPopupContainer={(triggerNode) =>
+                            triggerNode.parentNode
+                          }
+                        >
+                          <span>
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              icon={Trash2}
+                              className="p-2"
+                            />
+                          </span>
+                        </Popconfirm>
                       </div>
                     </div>
                   </div>
@@ -986,7 +1143,6 @@ export default function UserCaloriesTracker() {
           </div>
         </Card>
       </div>
-      <ToastContainer />
     </div>
   );
 }

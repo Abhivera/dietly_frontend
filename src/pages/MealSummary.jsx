@@ -30,6 +30,7 @@ import {
   PieChart as PieChartIcon,
 } from "lucide-react";
 import * as mealApi from "../api/meal";
+import * as userCaloriesApi from "../api/userCalories";
 import { useSelector } from "react-redux";
 
 export default function MealSummary() {
@@ -48,17 +49,64 @@ export default function MealSummary() {
       { analysis: { nutrients: { protein: 0, carbs: 0, fat: 0 } } },
     ],
   });
+  const [userCalories, setUserCalories] = useState([]);
   const [viewMode, setViewMode] = useState("today");
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
+  const [selectedDate] = useState(new Date().toISOString().split("T")[0]);
 
   useEffect(() => {
     if (token) {
-      // In a real app, you'd pass the viewMode and selectedDate to the API
+      // Fetch meal summary
       mealApi.getMealSummary(token, viewMode, selectedDate).then(setSummary);
+
+      // Fetch user calories (burned calories from activities)
+      const fetchUserCalories = async () => {
+        try {
+          const params = {};
+          if (viewMode === "today") {
+            params.start_date = selectedDate;
+            params.end_date = selectedDate;
+          } else if (viewMode === "weekly") {
+            const endDate = new Date(selectedDate);
+            const startDate = new Date(selectedDate);
+            startDate.setDate(startDate.getDate() - 7);
+            params.start_date = startDate.toISOString().split("T")[0];
+            params.end_date = endDate.toISOString().split("T")[0];
+          } else if (viewMode === "monthly") {
+            const endDate = new Date(selectedDate);
+            const startDate = new Date(selectedDate);
+            startDate.setMonth(startDate.getMonth() - 1);
+            params.start_date = startDate.toISOString().split("T")[0];
+            params.end_date = endDate.toISOString().split("T")[0];
+          }
+
+          const caloriesData = await userCaloriesApi.getUserCalories(
+            token,
+            params
+          );
+          setUserCalories(caloriesData);
+        } catch (error) {
+          console.error("Error fetching user calories:", error);
+          setUserCalories([]);
+        }
+      };
+
+      fetchUserCalories();
     }
   }, [token, viewMode, selectedDate]);
+
+  // Calculate total calories burned from activities
+  const totalCaloriesBurned = userCalories.reduce((total, entry) => {
+    return (
+      total +
+      entry.calories_burned.reduce((dayTotal, activity) => {
+        return dayTotal + parseInt(activity.calories) || 0;
+      }, 0)
+    );
+  }, 0);
+
+  // Calculate net calories (consumed - burned)
+  const netCalories = summary.total_calories - totalCaloriesBurned;
+
   // Mock data for charts
 
   const nutritionData = summary?.meals?.reduce(
@@ -98,51 +146,58 @@ export default function MealSummary() {
 
   return (
     <div className="max-w-7xl mx-auto mt-10 p-6 space-y-8">
-    
       {/* View Mode Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex bg-white rounded-xl shadow-lg p-1 border border-emerald-100">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 bg-white rounded-xl p-1 border border-emerald-100">
           {["today", "weekly", "monthly"].map((mode) => (
             <button
               key={mode}
               onClick={() => setViewMode(mode)}
-              className={`px-6 py-3 rounded-lg font-medium transition-all flex items-center space-x-2 ${
+              className={`px-3 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all flex items-center justify-center space-x-1 sm:space-x-2 text-sm sm:text-base ${
                 viewMode === mode
-                  ? "bg-emerald-500 text-white shadow-md transform scale-105"
+                  ? "bg-emerald-500 text-white transform scale-105"
                   : "text-gray-600 hover:bg-emerald-50"
               }`}
             >
-              {mode === "today" && <Clock className="w-4 h-4" />}
-              {mode === "weekly" && <TrendingUp className="w-4 h-4" />}
-              {mode === "monthly" && <Calendar className="w-4 h-4" />}
-              <span>{mode.charAt(0).toUpperCase() + mode.slice(1)}</span>
+              {mode === "today" && <Clock className="w-3 h-3 sm:w-4 sm:h-4" />}
+              {mode === "weekly" && (
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+              )}
+              {mode === "monthly" && (
+                <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+              )}
+              <span className="whitespace-nowrap">
+                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+              </span>
             </button>
           ))}
         </div>
 
         {viewMode === "today" && (
-          <div className="flex items-center bg-white rounded-xl shadow-lg border border-emerald-100">
-            <Calendar className="w-5 h-5 text-emerald-500 ml-3" />
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="px-4 py-3 border-0 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
+          <div className="flex items-center justify-center sm:justify-start bg-white rounded-xl border border-emerald-100 px-4 py-3">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500 mr-2 sm:mr-3" />
+            <span className="text-gray-700 font-medium text-sm sm:text-base">
+              {new Date(selectedDate).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              })}
+            </span>
           </div>
         )}
       </div>
 
       {/* Quick Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div className="bg-white border border-emerald-200 rounded-xl p-6 text-emerald-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+        <div className="bg-white border border-emerald-200 rounded-xl p-6 text-emerald-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-emerald-400 text-sm font-medium">
                 Total Meals
               </p>
-              <p className="text-3xl font-bold text-emerald-700">{summary.total_meals}</p>
-
+              <p className="text-3xl font-bold text-emerald-700">
+                {summary.total_meals}
+              </p>
             </div>
             <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
               <Utensils className="w-6 h-6 text-emerald-500" />
@@ -150,14 +205,15 @@ export default function MealSummary() {
           </div>
         </div>
 
-        <div className="bg-white border border-teal-200 rounded-xl p-6 text-teal-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+        <div className="bg-white border border-teal-200 rounded-xl p-6 text-teal-700">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-teal-400 text-sm font-medium">
-                Total Calories
+                Calories Consumed
               </p>
-              <p className="text-3xl font-bold text-teal-700">{summary.total_calories}</p>
-
+              <p className="text-3xl font-bold text-teal-700">
+                {summary.total_calories}
+              </p>
             </div>
             <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
               <Flame className="w-6 h-6 text-teal-500" />
@@ -165,34 +221,38 @@ export default function MealSummary() {
           </div>
         </div>
 
-        <div className="bg-white border border-emerald-200 rounded-xl p-6 text-emerald-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+        <div className="bg-white border border-orange-200 rounded-xl p-6 text-orange-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-emerald-400 text-sm font-medium">
-                Steps Taken
+              <p className="text-orange-400 text-sm font-medium">
+                Calories Burned
               </p>
-              <p className="text-3xl font-bold text-emerald-700">
-                {summary.total_exercise?.steps?.toLocaleString()}
+              <p className="text-3xl font-bold text-orange-700">
+                {totalCaloriesBurned}
               </p>
-
             </div>
-            <div className="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center">
-              <Footprints className="w-6 h-6 text-emerald-500" />
+            <div className="w-12 h-12 bg-orange-50 rounded-full flex items-center justify-center">
+              <Activity className="w-6 h-6 text-orange-500" />
             </div>
           </div>
         </div>
 
-        <div className="bg-white border border-teal-200 rounded-xl p-6 text-teal-700 shadow-sm hover:shadow-md transition-transform duration-200 transform hover:scale-105">
+        <div className="bg-white border border-purple-200 rounded-xl p-6 text-purple-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-teal-400 text-sm font-medium">Distance (km)</p>
-              <p className="text-3xl font-bold text-teal-700">
-                {summary.total_exercise?.walking_km}
+              <p className="text-purple-400 text-sm font-medium">
+                Net Calories
               </p>
-
+              <p
+                className={`text-3xl font-bold ${
+                  netCalories >= 0 ? "text-purple-700" : "text-red-600"
+                }`}
+              >
+                {netCalories}
+              </p>
             </div>
-            <div className="w-12 h-12 bg-teal-50 rounded-full flex items-center justify-center">
-              <Activity className="w-6 h-6 text-teal-500" />
+            <div className="w-12 h-12 bg-purple-50 rounded-full flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-purple-500" />
             </div>
           </div>
         </div>
@@ -201,7 +261,7 @@ export default function MealSummary() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Nutrition Breakdown Pie Chart */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+        <div className="bg-white rounded-2xl p-6 border border-emerald-100">
           <div className="flex items-center space-x-2 mb-4">
             <PieChartIcon className="w-6 h-6 text-emerald-500" />
             <h3 className="text-xl font-bold text-gray-800">
@@ -248,11 +308,11 @@ export default function MealSummary() {
         </div>
 
         {/* Calories vs Exercise */}
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+        <div className="bg-white rounded-2xl p-6 border border-emerald-100">
           <div className="flex items-center space-x-2 mb-4">
             <BarChart3 className="w-6 h-6 text-emerald-500" />
             <h3 className="text-xl font-bold text-gray-800">
-              Calories vs Exercise
+              Calories Consumed vs Burned
             </h3>
           </div>
           <div className="h-64">
@@ -261,8 +321,9 @@ export default function MealSummary() {
                 data={[
                   {
                     name: "Today",
-                    calories: summary.total_calories,
-                    steps: Math.round(summary.total_exercise?.steps / 100) || 0,
+                    consumed: summary.total_calories,
+                    burned: totalCaloriesBurned,
+                    net: netCalories,
                   },
                 ]}
               >
@@ -272,15 +333,15 @@ export default function MealSummary() {
                 <Tooltip />
                 <Legend />
                 <Bar
-                  dataKey="calories"
+                  dataKey="consumed"
                   fill="#10b981"
-                  name="Calories"
+                  name="Consumed"
                   radius={[4, 4, 0, 0]}
                 />
                 <Bar
-                  dataKey="steps"
-                  fill="#14b8a6"
-                  name="Steps (x100)"
+                  dataKey="burned"
+                  fill="#f97316"
+                  name="Burned"
                   radius={[4, 4, 0, 0]}
                 />
               </BarChart>
@@ -291,10 +352,49 @@ export default function MealSummary() {
         {/* Hide weekly and monthly charts if data is not available */}
       </div>
 
+      {/* Activity Details */}
+      {userCalories.length > 0 && (
+        <div className="bg-white rounded-2xl p-6 border border-emerald-100">
+          <div className="flex items-center space-x-2 mb-4">
+            <Activity className="w-6 h-6 text-emerald-500" />
+            <h3 className="text-xl font-bold text-gray-800">
+              Activity Details
+            </h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {userCalories.map((entry) => (
+              <div
+                key={entry.id}
+                className="bg-emerald-50 rounded-lg p-4 border border-emerald-200"
+              >
+                <div className="text-sm text-emerald-600 font-medium mb-2">
+                  {new Date(entry.activity_date).toLocaleDateString()}
+                </div>
+                <div className="space-y-2">
+                  {entry.calories_burned.map((activity, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center"
+                    >
+                      <span className="text-sm text-gray-700 capitalize">
+                        {activity.activity_name}
+                      </span>
+                      <span className="text-sm font-semibold text-emerald-700">
+                        {activity.calories} cal
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Weekly Summary Cards */}
       {viewMode === "weekly" && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-emerald-100">
+          <div className="bg-white rounded-xl p-6 border border-emerald-100">
             <div className="flex items-center space-x-2 mb-4">
               <Target className="w-5 h-5 text-emerald-500" />
               <h3 className="text-lg font-semibold text-gray-800">
