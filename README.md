@@ -1,12 +1,42 @@
-# React + Vite
+# Dietly Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, production-ready React (Vite) frontend for the Dietly nutrition and calorie tracking app.
 
-Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Getting Started
 
-## Expanding the ESLint configuration
+## Environment Variables
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- The frontend expects a backend API URL via the `VITE_API_BASE_URL` environment variable. Set this in your `.env` file or as a build arg if needed.
+
+### Local Development
+
+1. **Install dependencies:**
+   ```sh
+   npm install
+   ```
+2. **Start the development server:**
+   ```sh
+   npm run dev
+   ```
+   The app will be available at [http://localhost:5173](http://localhost:5173)
+
+### Docker Usage
+
+To build and run the frontend using Docker:
+
+```sh
+# Build the Docker image
+# (replace dietly-frontend with your preferred image name)
+docker build -t dietly-frontend .
+
+# Run the container on port 5173 (host) mapped to 80 (container)
+docker run -p 5173:80 dietly-frontend
+```
+
+The app will be available at [http://localhost:5173](http://localhost:5173)
+
+> **Note:** The container serves the production build using Nginx. The port mapping (`-p 5173:80`) exposes the app on your host's port 5173. You can change the host port if needed.
+
+
+
