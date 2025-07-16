@@ -6,7 +6,6 @@ import {
   Trash2,
   Calendar,
   Flame,
-  Activity,
   Footprints,
   Dumbbell,
   BarChart2,
@@ -21,6 +20,8 @@ import {
   Calculator,
   Edit3,
 } from "lucide-react";
+import DirectionsRunIcon from "@mui/icons-material/DirectionsRun";
+import QueryStatsIcon from "@mui/icons-material/QueryStats";
 import {
   createUserCalories,
   getUserCalories,
@@ -32,6 +33,8 @@ import { getUser } from "../api/user";
 import { useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 
 // --- Enhanced Activity Data ---
 const ACTIVITIES = {
@@ -39,7 +42,7 @@ const ACTIVITIES = {
     name: "Running",
     met: 9.8,
     unit: "minutes",
-    icon: Footprints,
+    icon: DirectionsRunIcon, // Use MUI icon
     color: "text-red-600",
     bgColor: "bg-red-50",
     borderColor: "border-red-200",
@@ -66,7 +69,7 @@ const ACTIVITIES = {
     name: "Cycling",
     met: 7.5,
     unit: "minutes",
-    icon: Activity,
+    icon: DirectionsRunIcon, // Use MUI icon for all Activity
     color: "text-green-600",
     bgColor: "bg-green-50",
     borderColor: "border-green-200",
@@ -75,7 +78,7 @@ const ACTIVITIES = {
     name: "Swimming",
     met: 8.0,
     unit: "minutes",
-    icon: Activity,
+    icon: DirectionsRunIcon, // Use MUI icon for all Activity
     color: "text-cyan-600",
     bgColor: "bg-cyan-50",
     borderColor: "border-cyan-200",
@@ -84,7 +87,7 @@ const ACTIVITIES = {
     name: "Yoga",
     met: 3.0,
     unit: "minutes",
-    icon: Activity,
+    icon: DirectionsRunIcon, // Use MUI icon for all Activity
     color: "text-indigo-600",
     bgColor: "bg-indigo-50",
     borderColor: "border-indigo-200",
@@ -93,7 +96,7 @@ const ACTIVITIES = {
     name: "Basketball",
     met: 8.0,
     unit: "minutes",
-    icon: Activity,
+    icon: DirectionsRunIcon, // Use MUI icon for all Activity
     color: "text-orange-600",
     bgColor: "bg-orange-50",
     borderColor: "border-orange-200",
@@ -102,7 +105,7 @@ const ACTIVITIES = {
     name: "Tennis",
     met: 7.0,
     unit: "minutes",
-    icon: Activity,
+    icon: DirectionsRunIcon, // Use MUI icon for all Activity
     color: "text-yellow-600",
     bgColor: "bg-yellow-50",
     borderColor: "border-yellow-200",
@@ -133,8 +136,8 @@ const getTodayDateString = () => new Date().toISOString().split("T")[0];
 const Card = ({ children, className = "", onClick, hover = true }) => (
   <div
     onClick={onClick}
-    className={`bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 ${
-      hover ? "hover:shadow-lg hover:border-gray-200" : ""
+    className={`bg-gray-50 rounded-xl border border-gray-300 overflow-hidden transition-all duration-300 ${
+      hover ? "hover:border-emerald-400" : ""
     } ${onClick ? "cursor-pointer" : ""} ${className}`}
   >
     {children}
@@ -240,7 +243,6 @@ export default function UserCaloriesTracker() {
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [userData, setUserData] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState(null);
@@ -255,7 +257,6 @@ export default function UserCaloriesTracker() {
     manualCalories: "",
     isAutoCalculate: true,
   });
-  const [formErrors, setFormErrors] = useState({});
   const [activities, setActivities] = useState([]);
 
   const calculatedCalories = useMemo(
@@ -332,39 +333,23 @@ export default function UserCaloriesTracker() {
       activityDate: getTodayDateString(),
       activityName: "running",
       activityValue: "",
-      bodyWeight: userData?.weight || 70,
+      bodyWeight: userData?.weight || 0,
       manualCalories: "",
       isAutoCalculate: true,
     });
-    setFormErrors({});
     setActivities([]);
     setIsFormOpen(false);
     setIsFormCollapsed(false);
   }, [userData?.weight]);
 
-  const handleFormSubmit = async () => {
-    if (!formData.activityDate) {
-      setFormErrors({ activityDate: "Please select an activity date." });
-      return;
-    }
-
-    // Check if date is in the future
-    const selectedDate = new Date(formData.activityDate);
-    const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
-
-    if (selectedDate > today) {
-      setFormErrors({ activityDate: "Activity date cannot be in the future." });
-      return;
-    }
-
+  const handleFormSubmit = async (values) => {
     if (activities.length === 0) {
       toast.error("Please add at least one activity before saving.");
       return;
     }
 
     const payload = {
-      activity_date: formData.activityDate,
+      activity_date: values.activityDate,
       calories_burned: activities.map((activity) => ({
         activity_name: activity.activity_name,
         calories: activity.calories,
@@ -372,7 +357,7 @@ export default function UserCaloriesTracker() {
     };
 
     try {
-      setIsSubmitting(true);
+      // Formik handles isSubmitting
 
       if (editingEntry) {
         await updateUserCalories(token, editingEntry.id, payload);
@@ -399,7 +384,7 @@ export default function UserCaloriesTracker() {
       toast.error(errorMessage);
       console.error("Submit error:", err);
     } finally {
-      setIsSubmitting(false);
+      // Formik handles isSubmitting
     }
   };
 
@@ -427,7 +412,6 @@ export default function UserCaloriesTracker() {
       );
       setActivities(existingActivities);
 
-      setFormErrors({});
       setIsFormOpen(true);
       setIsFormCollapsed(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -452,13 +436,6 @@ export default function UserCaloriesTracker() {
     setIsFormCollapsed(false);
   }, [resetForm]);
 
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (formErrors[field]) {
-      setFormErrors((prev) => ({ ...prev, [field]: null }));
-    }
-  };
-
   const addActivity = () => {
     if (
       !formData.activityName ||
@@ -467,21 +444,21 @@ export default function UserCaloriesTracker() {
       (!formData.isAutoCalculate &&
         (!formData.manualCalories || Number(formData.manualCalories) <= 0))
     ) {
-      setFormErrors({
-        activityName: !formData.activityName
-          ? "Activity type is required"
-          : null,
-        activityValue:
-          formData.isAutoCalculate &&
-          (!formData.activityValue || Number(formData.activityValue) <= 0)
-            ? "Please enter a valid activity value"
-            : null,
-        manualCalories:
-          !formData.isAutoCalculate &&
-          (!formData.manualCalories || Number(formData.manualCalories) <= 0)
-            ? "Please enter a valid calorie value"
-            : null,
-      });
+      // setFormErrors({
+      //   activityName: !formData.activityName
+      //     ? "Activity type is required"
+      //     : null,
+      //   activityValue:
+      //     formData.isAutoCalculate &&
+      //     (!formData.activityValue || Number(formData.activityValue) <= 0)
+      //       ? "Please enter a valid activity value"
+      //       : null,
+      //   manualCalories:
+      //     !formData.isAutoCalculate &&
+      //     (!formData.manualCalories || Number(formData.manualCalories) <= 0)
+      //       ? "Please enter a valid calorie value"
+      //       : null,
+      // });
       return;
     }
 
@@ -513,7 +490,7 @@ export default function UserCaloriesTracker() {
       activityValue: "",
       manualCalories: "",
     }));
-    setFormErrors({});
+    // setFormErrors({});
   };
 
   const removeActivity = (activityId) => {
@@ -530,7 +507,7 @@ export default function UserCaloriesTracker() {
   };
 
   const getActivityIcon = (activityName) => {
-    const ActivityIcon = ACTIVITIES[activityName]?.icon || Activity;
+    const ActivityIcon = ACTIVITIES[activityName]?.icon || DirectionsRunIcon;
     const color = ACTIVITIES[activityName]?.color || "text-gray-600";
     return <ActivityIcon className={`h-5 w-5 ${color}`} />;
   };
@@ -558,13 +535,52 @@ export default function UserCaloriesTracker() {
     );
   };
 
+  const today = new Date();
+  const activitySchema = Yup.object().shape({
+    activityDate: Yup.date()
+      .required("Please select an activity date.")
+      .max(today, "Activity date cannot be in the future."),
+    activityName: Yup.string().required("Activity type is required"),
+    activityValue: Yup.number().when("isAutoCalculate", {
+      is: true,
+      then: (schema) =>
+        schema
+          .required("Please enter a valid activity value")
+          .moreThan(0, "Must be greater than 0"),
+      otherwise: (schema) => schema,
+    }),
+    bodyWeight: Yup.number().when("isAutoCalculate", {
+      is: true,
+      then: (schema) =>
+        schema
+          .required("Please enter your weight")
+          .moreThan(0, "Must be greater than 0"),
+      otherwise: (schema) => schema,
+    }),
+    manualCalories: Yup.number().when("isAutoCalculate", {
+      is: false,
+      then: (schema) =>
+        schema
+          .required("Please enter a valid calorie value")
+          .moreThan(0, "Must be greater than 0"),
+      otherwise: (schema) => schema,
+    }),
+    isAutoCalculate: Yup.boolean(),
+  });
+
   // Check if user is authenticated
   if (!token) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 text-gray-800 p-4 sm:p-6 lg:p-8">
         <div className="max-w-5xl mx-auto">
           <div className="text-center py-12">
-            <Activity className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <DirectionsRunIcon
+              style={{
+                fontSize: 64,
+                color: "#D1D5DB",
+                margin: "0 auto 1rem auto",
+              }}
+            />
             <p className="text-gray-500 text-lg">
               Please log in to access the calorie tracker
             </p>
@@ -591,10 +607,13 @@ export default function UserCaloriesTracker() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <header className="mb-6 sm:mb-8 text-center">
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 bg-clip-text text-transparent mb-2">
-            Calorie Tracker
-          </h1>
-          <p className="text-gray-600 text-base sm:text-lg">
+          <div className="flex items-center justify-center gap-2">
+            <QueryStatsIcon style={{ fontSize: 40, color: "#006045" }} />
+            <h1 className="text-3xl sm:text-4xl  font-bold bg-emerald-800 bg-clip-text text-transparent mb-2">
+              Calorie Tracker
+            </h1>
+          </div>
+          <p className="text-emerald-600 text-base sm:text-lg">
             Track your activities and achieve your fitness goals
           </p>
         </header>
@@ -709,328 +728,396 @@ export default function UserCaloriesTracker() {
                   {editingEntry ? "Edit" : "Add New"} Activity Entry
                 </h2>
               </div>
-
               {!isFormCollapsed && (
-                <div className="space-y-6 animate-in slide-in-from-top-2">
-                  {/* Form Fields */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div>
-                      <label
-                        htmlFor="activity_date"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Activity Date
-                      </label>
-                      <input
-                        id="activity_date"
-                        type="date"
-                        value={formData.activityDate}
-                        onChange={(e) =>
-                          handleInputChange("activityDate", e.target.value)
-                        }
-                        className={`w-full border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
-                          formErrors.activityDate
-                            ? "border-red-500"
-                            : "border-gray-300"
-                        }`}
-                        required
-                      />
-                      {formErrors.activityDate && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {formErrors.activityDate}
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="activity_name"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Activity Type
-                      </label>
-                      <select
-                        id="activity_name"
-                        value={formData.activityName}
-                        onChange={(e) =>
-                          handleInputChange("activityName", e.target.value)
-                        }
-                        className="w-full border border-gray-300 rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                      >
-                        {Object.entries(ACTIVITIES).map(([key, { name }]) => (
-                          <option key={key} value={key}>
-                            {name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                    <div>
-                      <label
-                        htmlFor="activity_value"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Duration/Steps (
-                        {ACTIVITIES[formData.activityName]?.unit})
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          {getActivityIcon(formData.activityName)}
+                <Formik
+                  initialValues={{
+                    activityDate: formData.activityDate,
+                    activityName: formData.activityName,
+                    activityValue: formData.activityValue,
+                    bodyWeight: formData.bodyWeight,
+                    manualCalories: formData.manualCalories,
+                    isAutoCalculate: formData.isAutoCalculate,
+                  }}
+                  enableReinitialize
+                  validationSchema={activitySchema}
+                  onSubmit={async (values, { setSubmitting }) => {
+                    // Set local formData for compatibility with addActivity, etc.
+                    setFormData(values);
+                    setSubmitting(true);
+                    await handleFormSubmit(values);
+                    setSubmitting(false);
+                  }}
+                >
+                  {({
+                    values,
+                    errors,
+                    touched,
+                    handleChange,
+                    setFieldValue,
+                  }) => (
+                    <Form className="space-y-6 animate-in slide-in-from-top-2">
+                      {/* Form Fields */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
+                        {/* Activity Type */}
+                        <div className="flex flex-col">
+                          <label
+                            htmlFor="activity_name"
+                            className="block text-sm font-medium text-gray-700 mb-2 flex items-center"
+                          >
+                            Activity Type
+                            <span
+                              className="ml-1 text-gray-400"
+                              title="Select the type of activity you performed."
+                            ></span>
+                          </label>
+                          <Field
+                            as="select"
+                            id="activity_name"
+                            name="activityName"
+                            className={`w-full border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none transition-colors focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 ${
+                              (errors.activityName && touched.activityName) ||
+                              !values.activityName
+                                ? "border-red-500"
+                                : "border-green-400"
+                            }`}
+                            aria-label="Activity Type"
+                            onChange={(e) => {
+                              handleChange(e);
+                              setFieldValue("activityValue", ""); // reset value on type change
+                            }}
+                          >
+                            {Object.entries(ACTIVITIES).map(
+                              ([key, { name }]) => (
+                                <option key={key} value={key}>
+                                  {name}
+                                </option>
+                              )
+                            )}
+                          </Field>
+                          <ErrorMessage
+                            name="activityName"
+                            component="div"
+                            className="mt-1 text-sm text-red-600"
+                          />
                         </div>
-                        <input
-                          id="activity_value"
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={formData.activityValue}
-                          onChange={(e) =>
-                            handleInputChange("activityValue", e.target.value)
-                          }
-                          placeholder={`Enter ${
-                            ACTIVITIES[formData.activityName]?.unit
-                          }`}
-                          className={`w-full pl-10 sm:pl-12 border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
-                            formErrors.activityValue
-                              ? "border-red-500"
-                              : formData.isAutoCalculate
-                              ? "border-gray-300"
-                              : "border-gray-200 bg-gray-50"
-                          }`}
-                          required={formData.isAutoCalculate}
-                          disabled={!formData.isAutoCalculate}
-                        />
-                      </div>
-                      {formErrors.activityValue && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {formErrors.activityValue}
-                        </p>
-                      )}
-                      {!formData.isAutoCalculate && (
-                        <p className="mt-1 text-sm text-gray-500">
-                          Duration field is disabled in manual mode
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="body_weight"
-                        className="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Body Weight (kg)
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <User className="h-5 w-5 text-gray-400" />
-                        </div>
-                        <input
-                          id="body_weight"
-                          type="number"
-                          min="30"
-                          max="200"
-                          step="0.1"
-                          value={formData.bodyWeight}
-                          onChange={(e) =>
-                            handleInputChange("bodyWeight", e.target.value)
-                          }
-                          placeholder="Enter your weight"
-                          className={`w-full pl-10 sm:pl-12 border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
-                            formErrors.bodyWeight
-                              ? "border-red-500"
-                              : formData.isAutoCalculate
-                              ? "border-gray-300"
-                              : "border-gray-200 bg-gray-50"
-                          }`}
-                          required={formData.isAutoCalculate}
-                          disabled={!formData.isAutoCalculate}
-                        />
-                      </div>
-                      {formErrors.bodyWeight && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {formErrors.bodyWeight}
-                        </p>
-                      )}
-                      {!formData.isAutoCalculate && (
-                        <p className="mt-1 text-sm text-gray-500">
-                          Weight field is disabled in manual mode
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  {/* Enhanced Calorie Display with Toggle */}
-                  <div className="bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-4 sm:p-6">
-                    <div className="mb-4">
-                      <ToggleSwitch
-                        checked={formData.isAutoCalculate}
-                        onChange={() => {
-                          setFormData((prev) => ({
-                            ...prev,
-                            isAutoCalculate: !prev.isAutoCalculate,
-                            manualCalories: !prev.isAutoCalculate
-                              ? ""
-                              : prev.manualCalories,
-                          }));
-                          // Clear relevant errors when switching modes
-                          setFormErrors((prev) => ({
-                            ...prev,
-                            activityValue: null,
-                            manualCalories: null,
-                          }));
-                        }}
-                        label="Auto-calculate calories"
-                        description={
-                          formData.isAutoCalculate
-                            ? "Calories are automatically calculated based on activity and weight"
-                            : "Enter calories manually"
-                        }
-                      />
-                    </div>
-
-                    <div className="flex items-center justify-center space-x-4">
-                      <div className="bg-emerald-100 p-2 sm:p-3 rounded-full">
-                        {formData.isAutoCalculate ? (
-                          <Calculator className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
-                        ) : (
-                          <Edit3 className="h-6 w-6 sm:h-8 sm:w-8 text-emerald-600" />
-                        )}
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm text-gray-600 mb-1">
-                          {formData.isAutoCalculate ? "Estimated" : "Manual"}{" "}
-                          Calories Burned
-                        </p>
-                        {formData.isAutoCalculate ? (
-                          <p className="text-3xl sm:text-4xl font-bold text-emerald-600">
-                            {calculatedCalories.toLocaleString()}
-                          </p>
-                        ) : (
-                          <div className="flex items-center justify-center space-x-2">
-                            <input
+                        {/* Duration/Steps */}
+                        <div className="flex flex-col">
+                          <label
+                            htmlFor="activity_value"
+                            className="block text-sm font-medium text-gray-700 mb-2 flex items-center"
+                          >
+                            Duration/Steps
+                            <span
+                              className="ml-1 text-gray-400"
+                              title={`Enter the number of ${
+                                ACTIVITIES[values.activityName]?.unit
+                              } for this activity.`}
+                            ></span>
+                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                              ({ACTIVITIES[values.activityName]?.unit})
+                            </span>
+                          </label>
+                          <div className="relative flex items-center">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              {getActivityIcon(values.activityName)}
+                            </div>
+                            <Field
+                              id="activity_value"
+                              name="activityValue"
                               type="number"
                               min="0"
                               step="1"
-                              value={formData.manualCalories}
-                              onChange={(e) =>
-                                handleInputChange(
-                                  "manualCalories",
-                                  e.target.value
-                                )
+                              placeholder={`Enter ${
+                                ACTIVITIES[values.activityName]?.unit
+                              }`}
+                              className={`w-full pl-10 sm:pl-12 border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors
+                                ${
+                                  (errors.activityValue &&
+                                    touched.activityValue) ||
+                                  (!values.activityValue &&
+                                    values.isAutoCalculate)
+                                    ? "border-red-500"
+                                    : values.activityValue
+                                    ? "border-green-400"
+                                    : values.isAutoCalculate
+                                    ? "border-gray-300"
+                                    : "border-gray-200 bg-gray-50"
+                                }
+                              `}
+                              required={values.isAutoCalculate}
+                              aria-invalid={!!errors.activityValue}
+                              aria-describedby="activity_value_error"
+                              autoFocus={
+                                values.isAutoCalculate && !values.activityValue
                               }
-                              placeholder="Enter calories"
-                              className="text-3xl sm:text-4xl font-bold text-emerald-600 bg-transparent border-b-2 border-emerald-300 focus:border-emerald-500 focus:outline-none text-center w-32 sm:w-40"
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  // Optionally trigger addActivity here if needed
+                                }
+                              }}
                             />
                           </div>
-                        )}
-                        <p className="text-sm text-gray-500">kcal</p>
-                      </div>
-                    </div>
-
-                    {!formData.isAutoCalculate && formErrors.manualCalories && (
-                      <p className="mt-2 text-sm text-red-600 text-center">
-                        {formErrors.manualCalories}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Add Activity Button */}
-                  <div className="flex items-center justify-center">
-                    <Button
-                      onClick={addActivity}
-                      disabled={
-                        (formData.isAutoCalculate &&
-                          (!formData.activityValue ||
-                            Number(formData.activityValue) <= 0)) ||
-                        (!formData.isAutoCalculate &&
-                          (!formData.manualCalories ||
-                            Number(formData.manualCalories) <= 0))
-                      }
-                      icon={Plus}
-                      className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400 text-white transform hover:scale-105 active:scale-95"
-                    >
-                      Add Activity
-                    </Button>
-                  </div>
-
-                  {/* Activities List */}
-                  {activities.length > 0 && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
-                        <BarChart2 className="w-4 h-4 mr-2" />
-                        Activities ({activities.length})
-                      </h4>
-                      <div className="space-y-2">
-                        {activities.map((activity) => (
-                          <div
-                            key={activity.id}
-                            className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                          <ErrorMessage
+                            name="activityValue"
+                            component="div"
+                            className="mt-1 text-sm text-red-600"
+                          />
+                        </div>
+                        {/* Activity Date */}
+                        <div className="flex flex-col">
+                          <label
+                            htmlFor="activity_date"
+                            className="block text-sm font-medium text-gray-700 mb-2 flex items-center"
                           >
-                            <div className="flex items-center space-x-3 flex-1 min-w-0">
-                              {getActivityIcon(activity.activity_name)}
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-gray-800 truncate">
-                                  {getActivityDisplayName(
-                                    activity.activity_name
-                                  )}
-                                </p>
-                                <p className="text-sm text-gray-500">
-                                  {activity.duration} {activity.unit}
-                                </p>
-                              </div>
+                            Activity Date
+                          </label>
+                          <Field
+                            id="activity_date"
+                            name="activityDate"
+                            type="date"
+                            className={`w-full border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                              (errors.activityDate && touched.activityDate) ||
+                              !values.activityDate
+                                ? "border-red-500"
+                                : "border-green-400"
+                            }`}
+                            required
+                            aria-invalid={!!errors.activityDate}
+                            aria-describedby="activity_date_error"
+                            autoFocus={!values.activityDate}
+                          />
+                          <ErrorMessage
+                            name="activityDate"
+                            component="div"
+                            className="mt-1 text-sm text-red-600"
+                          />
+                        </div>
+                        {/* Body Weight */}
+                        <div className="flex flex-col">
+                          <label
+                            htmlFor="body_weight"
+                            className="block text-sm font-medium text-gray-700 mb-2 flex items-center"
+                          >
+                            Body Weight
+                            <span
+                              className="ml-1 text-gray-400"
+                              title="Your body weight in kilograms. Used for calorie calculation."
+                            ></span>
+                            <span className="ml-2 text-xs text-gray-500 font-normal">
+                              (kg)
+                            </span>
+                          </label>
+                          <div className="relative flex items-center">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <User className="h-5 w-5 text-gray-400" />
                             </div>
-                            <div className="flex items-center space-x-3 flex-shrink-0">
-                              <span className="font-bold text-emerald-600 text-sm sm:text-base">
-                                {parseInt(activity.calories).toLocaleString()}{" "}
-                                kcal
-                              </span>
-                              <Button
-                                onClick={() => removeActivity(activity.id)}
-                                variant="danger"
-                                size="sm"
-                                icon={Trash2}
-                                className="p-1"
-                              />
-                            </div>
+                            <Field
+                              id="body_weight"
+                              name="bodyWeight"
+                              type="number"
+                              min="30"
+                              max="200"
+                              step="0.1"
+                              placeholder="Enter your weight"
+                              className={`w-full pl-10 sm:pl-12 border rounded-lg shadow-sm py-2.5 sm:py-3 px-3 sm:px-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors
+                                ${
+                                  (errors.bodyWeight && touched.bodyWeight) ||
+                                  (!values.bodyWeight && values.isAutoCalculate)
+                                    ? "border-red-500"
+                                    : values.bodyWeight
+                                    ? "border-green-400"
+                                    : values.isAutoCalculate
+                                    ? "border-gray-300"
+                                    : "border-gray-200 bg-gray-50"
+                                }
+                              `}
+                              required={values.isAutoCalculate}
+                              aria-invalid={!!errors.bodyWeight}
+                              aria-describedby="body_weight_error"
+                              autoFocus={
+                                values.isAutoCalculate && !values.bodyWeight
+                              }
+                            />
                           </div>
-                        ))}
-                      </div>
-
-                      {/* Total Calories */}
-                      <div className="mt-4 pt-3 border-t border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-gray-700">
-                            Total Calories:
-                          </span>
-                          <span className="text-xl sm:text-2xl font-bold text-emerald-600">
-                            {getTotalCaloriesFromActivities().toLocaleString()}{" "}
-                            kcal
-                          </span>
+                          <ErrorMessage
+                            name="bodyWeight"
+                            component="div"
+                            className="mt-1 text-sm text-red-600"
+                          />
                         </div>
                       </div>
-                    </div>
+                      {/* Enhanced Calorie Display with Toggle - Single Row Layout */}
+                      <div className="relative bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl shadow p-2 sm:p-3 flex flex-row items-center gap-3 sm:gap-6 w-full">
+                        {/* Toggle and label */}
+                        <div className="flex items-center gap-2 min-w-[120px]">
+                          <span className="text-xs sm:text-sm font-bold text-emerald-700 whitespace-nowrap">
+                            Auto-calculate
+                          </span>
+                          <ToggleSwitch
+                            checked={values.isAutoCalculate}
+                            onChange={() => {
+                              setFieldValue(
+                                "isAutoCalculate",
+                                !values.isAutoCalculate
+                              );
+                              setFieldValue("manualCalories", "");
+                              setFieldValue("activityValue", "");
+                            }}
+                            label={null}
+                            description={null}
+                          />
+                        </div>
+                        {/* Calories input */}
+                        <div className="flex items-center gap-2 flex-1 justify-center">
+                          <div
+                            className={`rounded-full p-1.5 shadow ${
+                              values.isAutoCalculate
+                                ? "bg-emerald-100"
+                                : "bg-yellow-100"
+                            }`}
+                          >
+                            {values.isAutoCalculate ? (
+                              <Calculator className="h-4 w-4 text-emerald-600 animate-pulse" />
+                            ) : (
+                              <Edit3 className="h-4 w-4 text-yellow-600 animate-bounce" />
+                            )}
+                          </div>
+                          <div className="flex flex-col items-center flex-1 max-w-xs">
+                            <p className="text-[10px] text-emerald-700 mb-1 font-semibold tracking-wide uppercase">
+                              Calories Burned
+                            </p>
+                            {values.isAutoCalculate ? (
+                              <span className="inline-block text-2xl sm:text-3xl font-extrabold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg shadow-inner border border-emerald-200 w-full sm:w-auto text-center">
+                                {calculateCalories(
+                                  values.activityName,
+                                  Number(values.activityValue),
+                                  values.bodyWeight
+                                ).toLocaleString()}
+                              </span>
+                            ) : (
+                              <div className="flex items-center w-full justify-center">
+                                <Field
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  name="manualCalories"
+                                  placeholder="Calories"
+                                  className="text-2xl sm:text-2xl font-extrabold text-yellow-600 bg-transparent border-b border-yellow-300 focus:border-yellow-500 focus:outline-none text-center w-full sm:w-28"
+                                />
+                              </div>
+                            )}
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              kcal
+                            </p>
+                            {!values.isAutoCalculate && (
+                              <ErrorMessage
+                                name="manualCalories"
+                                component="div"
+                                className="mt-1 text-xs text-red-600 text-center"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Add Activity Button */}
+                      <div className="flex items-center justify-center">
+                        <Button
+                          onClick={addActivity}
+                          disabled={
+                            (values.isAutoCalculate &&
+                              (!values.activityValue ||
+                                Number(values.activityValue) <= 0)) ||
+                            (!values.isAutoCalculate &&
+                              (!values.manualCalories ||
+                                Number(values.manualCalories) <= 0))
+                          }
+                          icon={Plus}
+                          className="bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400 text-white transform hover:scale-105 active:scale-95"
+                        >
+                          Add Activity
+                        </Button>
+                      </div>
+                      {/* Activities List */}
+                      {activities.length > 0 && (
+                        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-700 mb-3 flex items-center">
+                            <BarChart2 className="w-4 h-4 mr-2" />
+                            Activities ({activities.length})
+                          </h4>
+                          <div className="space-y-2">
+                            {activities.map((activity) => (
+                              <div
+                                key={activity.id}
+                                className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+                              >
+                                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                                  {getActivityIcon(activity.activity_name)}
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-gray-800 truncate">
+                                      {getActivityDisplayName(
+                                        activity.activity_name
+                                      )}
+                                    </p>
+                                    <p className="text-sm text-gray-500">
+                                      {activity.duration} {activity.unit}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-3 flex-shrink-0">
+                                  <span className="font-bold text-emerald-600 text-sm sm:text-base">
+                                    {parseInt(
+                                      activity.calories
+                                    ).toLocaleString()}{" "}
+                                    kcal
+                                  </span>
+                                  <Button
+                                    onClick={() => removeActivity(activity.id)}
+                                    variant="danger"
+                                    size="sm"
+                                    icon={Trash2}
+                                    className="p-1"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                          {/* Total Calories */}
+                          <div className="mt-4 pt-3 border-t border-gray-200">
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-gray-700">
+                                Total Calories:
+                              </span>
+                              <span className="text-xl sm:text-2xl font-bold text-emerald-600">
+                                {getTotalCaloriesFromActivities().toLocaleString()}{" "}
+                                kcal
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {/* Form Actions */}
+                      <div className="flex flex-col sm:flex-row items-center justify-end space-y-2 sm:space-y-0 sm:space-x-4 pt-2">
+                        <Button
+                          type="submit"
+                          loading={values.isSubmitting}
+                          disabled={
+                            activities.length === 0 || values.isSubmitting
+                          }
+                          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400 text-white transform hover:scale-105 active:scale-95"
+                        >
+                          {editingEntry ? "Update" : "Save"}
+                        </Button>
+                        <Button
+                          onClick={resetForm}
+                          variant="secondary"
+                          className="w-full sm:w-auto"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </Form>
                   )}
-
-                  {/* Form Actions */}
-                  <div className="flex flex-col sm:flex-row items-center justify-end space-y-2 sm:space-y-0 sm:space-x-4 pt-4">
-                    <Button
-                      onClick={resetForm}
-                      variant="secondary"
-                      disabled={isSubmitting}
-                      className="w-full sm:w-auto"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleFormSubmit}
-                      loading={isSubmitting}
-                      disabled={activities.length === 0}
-                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 focus:ring-emerald-400 text-white transform hover:scale-105 active:scale-95"
-                    >
-                      {editingEntry ? "Update Entry" : "Save Entry"}
-                    </Button>
-                  </div>
-                </div>
+                </Formik>
               )}
             </div>
           </Card>
@@ -1048,7 +1135,13 @@ export default function UserCaloriesTracker() {
               <LoadingSpinner />
             ) : entries.length === 0 ? (
               <div className="text-center py-12">
-                <Activity className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <DirectionsRunIcon
+                  style={{
+                    fontSize: 64,
+                    color: "#D1D5DB",
+                    margin: "0 auto 1rem auto",
+                  }}
+                />
                 <p className="text-gray-500 text-lg">No entries found yet</p>
                 <p className="text-gray-400 text-sm">
                   Start logging your activities to see them here!

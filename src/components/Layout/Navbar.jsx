@@ -4,6 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../../slices/authSlice";
 import {
   User,
+  Flame,
   LogOut,
   Home as HomeIcon,
   Image as ImageIcon,
@@ -31,7 +32,7 @@ export default function Navbar() {
         {
           path: "/calorie-tracker",
           label: "Calorie Tracker",
-          icon: <HeartPulse className="w-4 h-4 mr-2" />,
+          icon: <Flame className="w-4 h-4 mr-2" />,
         },
           {
             path: "/health-info",

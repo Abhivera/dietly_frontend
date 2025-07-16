@@ -32,6 +32,7 @@ import {
 import * as mealApi from "../api/meal";
 import * as userCaloriesApi from "../api/userCalories";
 import { useSelector } from "react-redux";
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
 
 export default function MealSummary() {
   const token = useSelector((state) => state.auth.token);
@@ -145,7 +146,19 @@ export default function MealSummary() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto mt-10 p-6 space-y-8">
+    <div className="max-w-7xl mx-auto bg-emerald-50 p-6 space-y-8">
+      {/* Header */}
+      <header className="mb-6 sm:mb-8 text-center">
+        <div className="flex items-center justify-center gap-2">
+          <AssessmentOutlinedIcon style={{ fontSize: 40, color: "#006045" }} />
+          <h1 className="text-3xl sm:text-4xl font-bold bg-emerald-800 bg-clip-text text-transparent mb-2">
+            Meal Summary
+          </h1>
+        </div>
+        <p className="text-emerald-600 text-base sm:text-lg">
+          View your meal and nutrition summary at a glance
+        </p>
+      </header>
       {/* View Mode Controls */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-0 bg-white rounded-xl p-1 border border-emerald-100">

@@ -1,6 +1,7 @@
 import {
   Save,
   User,
+  ClipboardPlus,
   Target,
   Activity,
   TrendingUp,
@@ -177,8 +178,10 @@ export default function HealthInfo() {
     };
   };
 
-  const weightPrediction =
-    netCalories !== 0 ? getWeightPrediction(netCalories) : null;
+  // Show weight prediction card as long as mealSummary exists
+  const weightPrediction = mealSummary
+    ? getWeightPrediction(netCalories)
+    : null;
 
   const handleEdit = () => {
     setEditMode(true);
@@ -290,19 +293,19 @@ export default function HealthInfo() {
       />
       <div className="max-w-7xl mx-auto px-0 sm:px-0">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-emerald-800 mb-2 flex items-center justify-center gap-3">
-            <User className="w-8 h-8" />
+        <div className="text-center mb-4">
+          <h1 className="text-3xl sm:text-4xl font-bold text-emerald-800 mb-2 flex items-center justify-center gap-3">
+            <ClipboardPlus className="w-8 h-8" />
             Health Profile
           </h1>
           <p className="text-emerald-600">
-            Track your health metrics and goals
+            Track your health metrics and achieve your fitness goals
           </p>
         </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[300px]">
-            <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-8 mb-6 max-w-md w-full text-center">
+            <div className="bg-white rounded-xl  border border-emerald-100 p-8 mb-6 max-w-md w-full text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
               <h2 className="text-2xl font-bold text-emerald-700 mb-2">
                 Loading Health Profile
@@ -314,30 +317,23 @@ export default function HealthInfo() {
           </div>
         ) : isMissingRequired && !editMode ? (
           <div className="flex flex-col items-center justify-center min-h-[300px]">
-            <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-8 mb-6 max-w-md w-full text-center">
-              <h2 className="text-2xl font-bold text-emerald-700 mb-2">
-                Personalised Health Tracker
-              </h2>
-              <p className="text-emerald-600 mb-6">
+            <div className="bg-white rounded-xl  border border-emerald-100 p-8 mb-2 max-w-md w-full text-center">
+              <p className="font-bold text-base sm:text-lg text-emerald-800 mb-4">
                 Please enter your details to get started!
               </p>
+
               <button
                 onClick={handleEdit}
                 className="bg-emerald-600 text-white py-2 px-6 rounded-lg font-medium hover:bg-emerald-700 transition-colors duration-200"
               >
                 Enter Details
               </button>
+              
             </div>
           </div>
         ) : isMissingRequired && editMode ? (
           <div className="flex flex-col items-center justify-center min-h-[300px]">
             <div className="bg-white rounded-xl shadow-md border border-emerald-100 p-8 max-w-md w-full text-center">
-              <h2 className="text-2xl font-bold text-emerald-700 mb-2">
-                Personalised Health Tracker
-              </h2>
-              <p className="text-emerald-600 mb-6">
-                Please enter your details to get started!
-              </p>
               <Formik
                 initialValues={form}
                 enableReinitialize
@@ -350,83 +346,6 @@ export default function HealthInfo() {
               >
                 {({ isSubmitting }) => (
                   <Form className="space-y-6">
-                    {/* Unit Settings */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Settings className="w-4 h-4 text-gray-600" />
-                        <h4 className="text-sm font-semibold text-gray-700">
-                          Units
-                        </h4>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-xs text-gray-600 mb-1">
-                            Weight Unit
-                          </label>
-                          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setUnits((prev) => ({ ...prev, weight: "kg" }))
-                              }
-                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
-                                units.weight === "kg"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-white text-gray-700 hover:bg-gray-50"
-                              }`}
-                            >
-                              kg
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setUnits((prev) => ({ ...prev, weight: "lbs" }))
-                              }
-                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
-                                units.weight === "lbs"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-white text-gray-700 hover:bg-gray-50"
-                              }`}
-                            >
-                              lbs
-                            </button>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-gray-600 mb-1">
-                            Height Unit
-                          </label>
-                          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setUnits((prev) => ({ ...prev, height: "cm" }))
-                              }
-                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
-                                units.height === "cm"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-white text-gray-700 hover:bg-gray-50"
-                              }`}
-                            >
-                              cm
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setUnits((prev) => ({ ...prev, height: "ft" }))
-                              }
-                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
-                                units.height === "ft"
-                                  ? "bg-emerald-600 text-white"
-                                  : "bg-white text-gray-700 hover:bg-gray-50"
-                              }`}
-                            >
-                              ft
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-semibold text-emerald-700 mb-2">
@@ -542,6 +461,83 @@ export default function HealthInfo() {
                         Cancel
                       </button>
                     </div>
+                    {/* Unit Settings */}
+                    <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Settings className="w-4 h-4 text-gray-600" />
+                        <h4 className="text-sm font-semibold text-gray-700">
+                          Units
+                        </h4>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Weight Unit
+                          </label>
+                          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, weight: "kg" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.weight === "kg"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              kg
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, weight: "lbs" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.weight === "lbs"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              lbs
+                            </button>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-600 mb-1">
+                            Height Unit
+                          </label>
+                          <div className="flex border border-gray-300 rounded-lg overflow-hidden">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, height: "cm" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.height === "cm"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              cm
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setUnits((prev) => ({ ...prev, height: "ft" }))
+                              }
+                              className={`flex-1 py-2 px-3 text-xs font-medium transition-colors ${
+                                units.height === "ft"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-white text-gray-700 hover:bg-gray-50"
+                              }`}
+                            >
+                              ft
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </Form>
                 )}
               </Formik>
@@ -557,6 +553,254 @@ export default function HealthInfo() {
                   : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 justify-items-center"
               }`}
             >
+              {/* BMI Card */}
+              {!editMode && currentBMI && (
+                <div className="w-full sm:w-[250px] flex flex-col">
+                  <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
+                    <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
+                      <Ruler className="w-5 h-5" />
+                      BMI Analysis
+                    </h3>
+
+                    <div className="text-center mb-4">
+                      <div className="text-3xl font-bold text-emerald-700 mb-1">
+                        {currentBMI}
+                      </div>
+                      <div
+                        className={`px-3 py-1 rounded-full text-sm font-medium border ${bmiCategory.bg} ${bmiCategory.color}`}
+                      >
+                        {bmiCategory.category}
+                      </div>
+                    </div>
+
+                    {/* BMI Scale */}
+                    <div className="space-y-5 text-xs">
+                      <div className="flex justify-between items-center p-2 rounded bg-blue-50 border border-blue-200">
+                        <span className="font-medium text-blue-700">
+                          Underweight
+                        </span>
+                        <span className="font-medium text-blue-700">
+                          &lt; 18.5
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded bg-green-50 border border-green-200">
+                        <span className="font-medium text-green-700">
+                          Normal
+                        </span>
+                        <span className="font-medium text-green-700">
+                          18.5 - 24.9
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded bg-yellow-50 border border-yellow-200">
+                        <span className="font-medium text-yellow-700">
+                          Overweight
+                        </span>
+                        <span className="font-medium text-yellow-700">
+                          25 - 29.9
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center p-2 rounded bg-red-50 border border-red-200">
+                        <span className="font-medium text-red-700">Obese</span>
+                        <span className="font-medium text-red-700">≥ 30</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}{" "}
+              {/* Weight Prediction Card */}
+              {!editMode && weightPrediction && (
+                <div className="w-full sm:w-[250px] flex flex-col">
+                  <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
+                    <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
+                      <TrendingUp className="w-5 h-5" />
+                      Weight Prediction
+                    </h3>
+
+                    {/* Net Calories Info */}
+                    {mealSummary && (
+                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+                        <div className="text-sm text-blue-700 font-medium mb-1">
+                          Net Calories (Consumed - Burned)
+                        </div>
+                        <div
+                          className={`text-lg font-bold ${
+                            netCalories >= 0 ? "text-blue-800" : "text-red-600"
+                          }`}
+                        >
+                          {netCalories} cal/day
+                        </div>
+                        <div className="text-xs text-blue-600 mt-1">
+                          Consumed: {mealSummary.total_calories} | Burned:{" "}
+                          {totalCaloriesBurned}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Predictions - 2x3 Grid Layout */}
+                    <div className="space-y-2 flex-1">
+                      {/* First Row - 2 columns */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg">
+                          <div className="text-xs font-medium text-emerald-700 mb-1">
+                            Daily
+                          </div>
+                          <div className="text-sm font-bold text-emerald-800">
+                            {(
+                              parseFloat(form.weight) +
+                              parseFloat(weightPrediction.daily)
+                            ).toFixed(1)}{" "}
+                            {units.weight}
+                          </div>
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.daily) >= 0
+                                ? "text-emerald-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.daily) >= 0 ? "+" : ""}
+                            {weightPrediction.daily}
+                          </div>
+                        </div>
+
+                        <div className="p-2 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg">
+                          <div className="text-xs font-medium text-teal-700 mb-1">
+                            Weekly
+                          </div>
+                          <div className="text-sm font-bold text-teal-800">
+                            {(
+                              parseFloat(form.weight) +
+                              parseFloat(weightPrediction.weekly)
+                            ).toFixed(1)}{" "}
+                            {units.weight}
+                          </div>
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.weekly) >= 0
+                                ? "text-teal-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.weekly) >= 0
+                              ? "+"
+                              : ""}
+                            {weightPrediction.weekly}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Second Row - 2 columns */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="p-2 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg">
+                          <div className="text-xs font-medium text-cyan-700 mb-1">
+                            Monthly
+                          </div>
+                          <div className="text-sm font-bold text-cyan-800">
+                            {(
+                              parseFloat(form.weight) +
+                              parseFloat(weightPrediction.monthly)
+                            ).toFixed(1)}{" "}
+                            {units.weight}
+                          </div>
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.monthly) >= 0
+                                ? "text-cyan-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.monthly) >= 0
+                              ? "+"
+                              : ""}
+                            {weightPrediction.monthly}
+                          </div>
+                        </div>
+
+                        <div className="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
+                          <div className="text-xs font-medium text-blue-700 mb-1">
+                            Yearly
+                          </div>
+                          <div className="text-sm font-bold text-blue-800">
+                            {(
+                              parseFloat(form.weight) +
+                              parseFloat(weightPrediction.yearly)
+                            ).toFixed(1)}{" "}
+                            {units.weight}
+                          </div>
+                          <div
+                            className={`text-xs ${
+                              parseFloat(weightPrediction.yearly) >= 0
+                                ? "text-blue-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {parseFloat(weightPrediction.yearly) >= 0
+                              ? "+"
+                              : ""}
+                            {weightPrediction.yearly}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Info Footer */}
+                    <div className="mt-2 border-t border-emerald-100">
+                      <div className="flex items-center gap-2 text-xs text-emerald-600">
+                        <Info className="w-3 h-3" />
+                        <span>Based on net calories (1kg ≈ 7700 kcal)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {/* Weight Recommendations */}
+              {!editMode && recommendedRange && (
+                <div className="w-full sm:w-[250px] flex flex-col">
+                  <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
+                    <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
+                      <Target className="w-5 h-5" />
+                      Weight Range
+                    </h3>
+
+                    <div className="space-y-3">
+                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                        <div className="text-sm text-emerald-700 font-medium mb-1">
+                          Healthy Range
+                        </div>
+                        <div className="text-lg font-bold text-emerald-800">
+                          {recommendedRange.min} - {recommendedRange.max}{" "}
+                          {units.weight}
+                        </div>
+                      </div>
+
+                      {form.weight && (
+                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                          <div className="text-sm text-gray-700 font-medium mb-1">
+                            Current Weight
+                          </div>
+                          <div className="text-lg font-bold text-gray-800">
+                            {form.weight} {units.weight}
+                          </div>
+                        </div>
+                      )}
+
+                      {form.goal_weight && goalBMI && (
+                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="text-sm text-blue-700 font-medium mb-1">
+                            Goal Weight
+                          </div>
+                          <div className="text-lg font-bold text-blue-800">
+                            {form.goal_weight} {units.weight}
+                          </div>
+                          <div className="text-sm text-blue-600 mt-1">
+                            BMI: {goalBMI}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               {/* Personal Information Card */}
               <div
                 className={`${
@@ -854,257 +1098,6 @@ export default function HealthInfo() {
                   )}
                 </div>
               </div>
-
-              {/* BMI Card */}
-              {!editMode && currentBMI && (
-                <div className="w-full sm:w-[250px] flex flex-col">
-                  <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
-                    <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
-                      <Ruler className="w-5 h-5" />
-                      BMI Analysis
-                    </h3>
-
-                    <div className="text-center mb-4">
-                      <div className="text-3xl font-bold text-emerald-700 mb-1">
-                        {currentBMI}
-                      </div>
-                      <div
-                        className={`px-3 py-1 rounded-full text-sm font-medium border ${bmiCategory.bg} ${bmiCategory.color}`}
-                      >
-                        {bmiCategory.category}
-                      </div>
-                    </div>
-
-                    {/* BMI Scale */}
-                    <div className="space-y-5 text-xs">
-                      <div className="flex justify-between items-center p-2 rounded bg-blue-50 border border-blue-200">
-                        <span className="font-medium text-blue-700">
-                          Underweight
-                        </span>
-                        <span className="font-medium text-blue-700">
-                          &lt; 18.5
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded bg-green-50 border border-green-200">
-                        <span className="font-medium text-green-700">
-                          Normal
-                        </span>
-                        <span className="font-medium text-green-700">
-                          18.5 - 24.9
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded bg-yellow-50 border border-yellow-200">
-                        <span className="font-medium text-yellow-700">
-                          Overweight
-                        </span>
-                        <span className="font-medium text-yellow-700">
-                          25 - 29.9
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center p-2 rounded bg-red-50 border border-red-200">
-                        <span className="font-medium text-red-700">Obese</span>
-                        <span className="font-medium text-red-700">≥ 30</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Weight Recommendations */}
-              {!editMode && recommendedRange && (
-                <div className="w-full sm:w-[250px] flex flex-col">
-                  <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
-                    <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
-                      <Target className="w-5 h-5" />
-                      Weight Range
-                    </h3>
-
-                    <div className="space-y-3">
-                      <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                        <div className="text-sm text-emerald-700 font-medium mb-1">
-                          Healthy Range
-                        </div>
-                        <div className="text-lg font-bold text-emerald-800">
-                          {recommendedRange.min} - {recommendedRange.max}{" "}
-                          {units.weight}
-                        </div>
-                      </div>
-
-                      {form.weight && (
-                        <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                          <div className="text-sm text-gray-700 font-medium mb-1">
-                            Current Weight
-                          </div>
-                          <div className="text-lg font-bold text-gray-800">
-                            {form.weight} {units.weight}
-                          </div>
-                        </div>
-                      )}
-
-                      {form.goal_weight && goalBMI && (
-                        <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                          <div className="text-sm text-blue-700 font-medium mb-1">
-                            Goal Weight
-                          </div>
-                          <div className="text-lg font-bold text-blue-800">
-                            {form.goal_weight} {units.weight}
-                          </div>
-                          <div className="text-sm text-blue-600 mt-1">
-                            BMI: {goalBMI}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Weight Prediction Card */}
-              {!editMode && weightPrediction && (
-                <div className="w-full sm:w-[250px] flex flex-col">
-                  <div className="bg-white rounded-xl shadow-sm border border-emerald-100 p-6 h-full flex flex-col">
-                    <h3 className="text-lg font-semibold text-emerald-800 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5" />
-                      Weight Prediction
-                    </h3>
-
-                    {/* Net Calories Info */}
-                    {mealSummary && (
-                      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-4">
-                        <div className="text-sm text-blue-700 font-medium mb-1">
-                          Net Calories (Consumed - Burned)
-                        </div>
-                        <div
-                          className={`text-lg font-bold ${
-                            netCalories >= 0 ? "text-blue-800" : "text-red-600"
-                          }`}
-                        >
-                          {netCalories} cal/day
-                        </div>
-                        <div className="text-xs text-blue-600 mt-1">
-                          Consumed: {mealSummary.total_calories} | Burned:{" "}
-                          {totalCaloriesBurned}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Predictions - 2x3 Grid Layout */}
-                    <div className="space-y-2 flex-1">
-                      {/* First Row - 2 columns */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="p-2 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-lg">
-                          <div className="text-xs font-medium text-emerald-700 mb-1">
-                            Daily
-                          </div>
-                          <div className="text-sm font-bold text-emerald-800">
-                            {(
-                              parseFloat(form.weight) +
-                              parseFloat(weightPrediction.daily)
-                            ).toFixed(1)}{" "}
-                            {units.weight}
-                          </div>
-                          <div
-                            className={`text-xs ${
-                              parseFloat(weightPrediction.daily) >= 0
-                                ? "text-emerald-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {parseFloat(weightPrediction.daily) >= 0 ? "+" : ""}
-                            {weightPrediction.daily}
-                          </div>
-                        </div>
-
-                        <div className="p-2 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-200 rounded-lg">
-                          <div className="text-xs font-medium text-teal-700 mb-1">
-                            Weekly
-                          </div>
-                          <div className="text-sm font-bold text-teal-800">
-                            {(
-                              parseFloat(form.weight) +
-                              parseFloat(weightPrediction.weekly)
-                            ).toFixed(1)}{" "}
-                            {units.weight}
-                          </div>
-                          <div
-                            className={`text-xs ${
-                              parseFloat(weightPrediction.weekly) >= 0
-                                ? "text-teal-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {parseFloat(weightPrediction.weekly) >= 0
-                              ? "+"
-                              : ""}
-                            {weightPrediction.weekly}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Second Row - 2 columns */}
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="p-2 bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg">
-                          <div className="text-xs font-medium text-cyan-700 mb-1">
-                            Monthly
-                          </div>
-                          <div className="text-sm font-bold text-cyan-800">
-                            {(
-                              parseFloat(form.weight) +
-                              parseFloat(weightPrediction.monthly)
-                            ).toFixed(1)}{" "}
-                            {units.weight}
-                          </div>
-                          <div
-                            className={`text-xs ${
-                              parseFloat(weightPrediction.monthly) >= 0
-                                ? "text-cyan-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {parseFloat(weightPrediction.monthly) >= 0
-                              ? "+"
-                              : ""}
-                            {weightPrediction.monthly}
-                          </div>
-                        </div>
-
-                        <div className="p-2 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg">
-                          <div className="text-xs font-medium text-blue-700 mb-1">
-                            Yearly
-                          </div>
-                          <div className="text-sm font-bold text-blue-800">
-                            {(
-                              parseFloat(form.weight) +
-                              parseFloat(weightPrediction.yearly)
-                            ).toFixed(1)}{" "}
-                            {units.weight}
-                          </div>
-                          <div
-                            className={`text-xs ${
-                              parseFloat(weightPrediction.yearly) >= 0
-                                ? "text-blue-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {parseFloat(weightPrediction.yearly) >= 0
-                              ? "+"
-                              : ""}
-                            {weightPrediction.yearly}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Info Footer */}
-                    <div className="mt-2 border-t border-emerald-100">
-                      <div className="flex items-center gap-2 text-xs text-emerald-600">
-                        <Info className="w-3 h-3" />
-                        <span>Based on net calories (1kg ≈ 7700 kcal)</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           </>
         )}
