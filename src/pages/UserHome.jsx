@@ -51,7 +51,7 @@ export default function UserHome() {
     if (!token) return;
     setLoading(true);
     let isCurrent = true;
-    getAllImages(token)
+    getAllImages()
       .then((data) => {
         if (!isCurrent) return;
         setImages(data.images || []);
@@ -152,7 +152,7 @@ export default function UserHome() {
     }
     try {
       setUploading(true);
-      const res = await uploadAndAnalyzeImage(token, file, description);
+      const res = await uploadAndAnalyzeImage(file, description);
       if (res && res.image) {
         setImages((prev) => [res.image, ...prev]);
         toast.success("Image uploaded and analyzed successfully!");
@@ -175,7 +175,7 @@ export default function UserHome() {
       return;
     }
     try {
-      await deleteImage(token, id);
+      await deleteImage(id);
       setImages((prev) => prev.filter((img) => img.id !== id));
       toast.success("Image deleted successfully");
     } catch (error) {
@@ -193,7 +193,7 @@ export default function UserHome() {
     setMealUpdatingId(img.id);
     try {
       const newIsMeal = !img.analysis.is_meal;
-      const res = await updateImageIsMeal(token, img.id, newIsMeal);
+      const res = await updateImageIsMeal(img.id, newIsMeal);
       if (res && res.success) {
         setImages((prev) =>
           prev.map((i) =>
@@ -383,7 +383,6 @@ export default function UserHome() {
         {/* Controls */}
         <div className="bg-white rounded-lg p-6 mb-6 border border-emerald-200">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            {/* View Mode Toggle */}
             {/* View Mode Toggle */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <div className="flex items-center gap-2">

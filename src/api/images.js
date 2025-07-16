@@ -1,70 +1,46 @@
-// src/api/images.js
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import axiosInstance from "./axiosInstance";
 
-export async function uploadAndAnalyzeImage(token, file, description) {
+export async function uploadAndAnalyzeImage(file, description) {
   const formData = new FormData();
   formData.append("file", file);
   if (description) {
     formData.append("description", description);
   }
-  const res = await fetch(`${BASE_URL}/images/upload-and-analyze`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+  const res = await axiosInstance.post("/images/upload-and-analyze", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
-  const data = await res.json();
-  if (!res.ok) {
+  const data = res.data;
+  if (!res.status || res.status >= 400) {
     throw new Error(data.message || "Upload failed");
   }
   return data;
 }
 
-export async function getImage(token, image_id) {
-  const res = await fetch(`${BASE_URL}/images/${image_id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.json();
+export async function getImage(image_id) {
+  const res = await axiosInstance.get(`/images/${image_id}`);
+  return res.data;
 }
 
-export async function deleteImage(token, image_id) {
-  const res = await fetch(`${BASE_URL}/images/${image_id}`, {
-    method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.json();
+export async function deleteImage(image_id) {
+  const res = await axiosInstance.delete(`/images/${image_id}`);
+  return res.data;
 }
 
-export async function getAllImages(token, params = {}) {
-  const url = new URL(`${BASE_URL}/images/`);
-  Object.entries(params).forEach(([key, value]) => {
-    if (value) url.searchParams.append(key, value);
-  });
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.json();
+export async function getAllImages(params = {}) {
+  const res = await axiosInstance.get("/images/", { params });
+  return res.data;
 }
 
-export async function getFreshUrl(token, image_id, expiration = 3600) {
-  const res = await fetch(
-    `${BASE_URL}/images/${image_id}/fresh-url?expiration=${expiration}`,
-    {
-      headers: { Authorization: `Bearer ${token}` },
-    }
-  );
-  return res.json();
+export async function getFreshUrl(image_id, expiration = 3600) {
+  const res = await axiosInstance.get(`/images/${image_id}/fresh-url`, {
+    params: { expiration },
+  });
+  return res.data;
 }
 
-export async function updateImageIsMeal(token, image_id, is_meal) {
-  const res = await fetch(`${BASE_URL}/images/is-meal/${image_id}`, {
-    method: "PATCH",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ is_meal }),
+export async function updateImageIsMeal(image_id, is_meal) {
+  const res = await axiosInstance.patch(`/images/is-meal/${image_id}`, {
+    is_meal,
   });
-  return res.json();
+  return res.data;
 }

@@ -1,34 +1,20 @@
-// src/api/user.js
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import axiosInstance from "./axiosInstance";
 
-export async function getUser(token) {
-  const res = await fetch(`${BASE_URL}/users/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.json();
+export async function getUser() {
+  const res = await axiosInstance.get("/users/me");
+  return res.data;
 }
 
-export async function updateUser(token, data) {
-  const res = await fetch(`${BASE_URL}/users/me`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  return res.json();
+export async function updateUser(data) {
+  const res = await axiosInstance.put("/users/me", data);
+  return res.data;
 }
 
-export async function uploadAvatar(token, file) {
+export async function uploadAvatar(file) {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch(`${BASE_URL}/users/me/avatar`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
+  const res = await axiosInstance.post("/users/me/avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
   });
-  return res.json();
+  return res.data;
 }

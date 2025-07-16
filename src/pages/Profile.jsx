@@ -43,7 +43,7 @@ export default function Profile() {
   useEffect(() => {
     const fetchUser = async () => {
       if (token) {
-        const userData = await userApi.getUser(token);
+        const userData = await userApi.getUser();
         setUser(userData);
         setForm({
           full_name: userData.full_name || "",
@@ -87,13 +87,13 @@ export default function Profile() {
       setShowLogoutConfirm(true); // This line is removed as per the edit hint
       return;
     }
-    const res = await userApi.updateUser(token, form);
+    const res = await userApi.updateUser(form);
     if (res.detail) setMessage(res.detail);
     else {
       setMessage("Profile updated");
       dispatch(getCurrentUser(token));
       // Refresh user data
-      const userData = await userApi.getUser(token);
+      const userData = await userApi.getUser();
       setUser(userData);
       setIsEditing(false);
     }
@@ -103,13 +103,13 @@ export default function Profile() {
     e.preventDefault();
     if (!avatar) return;
     setMessage("");
-    const res = await userApi.uploadAvatar(token, avatar);
+    const res = await userApi.uploadAvatar(avatar);
     if (res.detail) setMessage(res.detail);
     else {
       setMessage("Avatar updated");
       dispatch(getCurrentUser(token));
       // Refresh user data
-      const userData = await userApi.getUser(token);
+      const userData = await userApi.getUser();
       setUser(userData);
       setAvatar(null);
       setAvatarPreview(null);
@@ -151,7 +151,7 @@ export default function Profile() {
   // Confirm handler for Popconfirm: actually update and then logout
   const handleLogoutConfirm = async () => {
     setShowLogoutConfirm(false);
-    const res = await userApi.updateUser(token, form);
+    const res = await userApi.updateUser(form);
     if (res.detail) {
       setMessage(res.detail);
       return;

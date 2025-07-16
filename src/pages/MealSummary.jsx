@@ -32,7 +32,7 @@ import {
 import * as mealApi from "../api/meal";
 import * as userCaloriesApi from "../api/userCalories";
 import { useSelector } from "react-redux";
-import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined';
+import AssessmentOutlinedIcon from "@mui/icons-material/AssessmentOutlined";
 
 export default function MealSummary() {
   const token = useSelector((state) => state.auth.token);
@@ -57,7 +57,7 @@ export default function MealSummary() {
   useEffect(() => {
     if (token) {
       // Fetch meal summary
-      mealApi.getMealSummary(token, viewMode, selectedDate).then(setSummary);
+      mealApi.getMealSummary({ viewMode, selectedDate }).then(setSummary);
 
       // Fetch user calories (burned calories from activities)
       const fetchUserCalories = async () => {
@@ -79,18 +79,12 @@ export default function MealSummary() {
             params.start_date = startDate.toISOString().split("T")[0];
             params.end_date = endDate.toISOString().split("T")[0];
           }
-
-          const caloriesData = await userCaloriesApi.getUserCalories(
-            token,
-            params
-          );
-          setUserCalories(caloriesData);
+          const calories = await userCaloriesApi.getUserCalories(params);
+          setUserCalories(calories);
         } catch (error) {
-          console.error("Error fetching user calories:", error);
-          setUserCalories([]);
+          console.error(error);
         }
       };
-
       fetchUserCalories();
     }
   }, [token, viewMode, selectedDate]);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Popconfirm } from "antd";
 import {
   Plus,
@@ -30,7 +30,6 @@ import {
   getRecentCaloriesSummary,
 } from "../api/userCalories";
 import { getUser } from "../api/user";
-import { useSelector } from "react-redux";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Formik, Form, Field, ErrorMessage } from "formik";
@@ -170,13 +169,12 @@ const ToggleSwitch = ({ checked, onChange, label, description }) => (
 
 const Button = ({
   children,
-  onClick,
+  icon: Icon,
+  loading = false,
+  className = "",
   variant = "primary",
   size = "md",
-  className = "",
-  disabled = false,
-  loading = false,
-  icon: Icon,
+  ...props // forward all other props
 }) => {
   const baseClasses =
     "font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg flex items-center justify-center";
@@ -202,9 +200,8 @@ const Button = ({
 
   return (
     <button
-      onClick={onClick}
-      disabled={disabled || loading}
       className={`${baseClasses} ${sizes[size]} ${variants[variant]} ${className}`}
+      {...props} // forward all props, including onClick, type, etc.
     >
       {loading ? (
         <div className="flex items-center">
@@ -239,7 +236,6 @@ const LoadingSpinner = ({ size = "md" }) => {
 
 // --- Main Component ---
 export default function UserCaloriesTracker() {
-  const { token } = useSelector((state) => state.auth);
   const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -259,27 +255,9 @@ export default function UserCaloriesTracker() {
   });
   const [activities, setActivities] = useState([]);
 
-  const calculatedCalories = useMemo(
-    () =>
-      formData.isAutoCalculate
-        ? calculateCalories(
-            formData.activityName,
-            Number(formData.activityValue),
-            formData.bodyWeight
-          )
-        : Number(formData.manualCalories) || 0,
-    [
-      formData.activityName,
-      formData.activityValue,
-      formData.bodyWeight,
-      formData.isAutoCalculate,
-      formData.manualCalories,
-    ]
-  );
-
   const fetchUserData = useCallback(async () => {
     try {
-      const user = await getUser(token);
+      const user = await getUser();
       setUserData(user);
       if (user.weight) {
         setFormData((prev) => ({
@@ -290,14 +268,14 @@ export default function UserCaloriesTracker() {
     } catch (err) {
       console.error("Failed to fetch user data:", err);
     }
-  }, [token]);
+  }, []);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = async () => {
     try {
       setIsLoading(true);
       const [fetchedEntries, fetchedSummary] = await Promise.all([
-        getUserCalories(token, {}),
-        getRecentCaloriesSummary(token, 7),
+        getUserCalories({}),
+        getRecentCaloriesSummary(7),
       ]);
 
       setEntries(
@@ -318,14 +296,12 @@ export default function UserCaloriesTracker() {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  };
 
   useEffect(() => {
-    if (token) {
-      fetchData();
-      fetchUserData();
-    }
-  }, [token, fetchData, fetchUserData]);
+    fetchData();
+    fetchUserData();
+  }, []);
 
   const resetForm = useCallback(() => {
     setEditingEntry(null);
@@ -360,10 +336,10 @@ export default function UserCaloriesTracker() {
       // Formik handles isSubmitting
 
       if (editingEntry) {
-        await updateUserCalories(token, editingEntry.id, payload);
+        await updateUserCalories(editingEntry.id, payload);
         toast.success("Activity entry updated successfully!");
       } else {
-        await createUserCalories(token, payload);
+        await createUserCalories(payload);
         toast.success("Activity entry created successfully!");
       }
 
@@ -373,7 +349,20 @@ export default function UserCaloriesTracker() {
       // Handle specific error messages from the API
       let errorMessage = err.message;
 
-      if (err.message.includes("already exists")) {
+      // Check for API error in err.response.data.detail
+      if (err.response && err.response.data && err.response.data.detail) {
+        if (err.response.data.detail.includes("already exists")) {
+          errorMessage =
+            "An entry already exists for this date. Please edit the existing entry instead.";
+        } else if (
+          err.response.data.detail.includes("cannot be in the future")
+        ) {
+          errorMessage =
+            "Activity date cannot be in the future. Please select a valid date.";
+        } else {
+          errorMessage = err.response.data.detail;
+        }
+      } else if (err.message.includes("already exists")) {
         errorMessage =
           "An entry already exists for this date. Please edit the existing entry instead.";
       } else if (err.message.includes("cannot be in the future")) {
@@ -421,7 +410,7 @@ export default function UserCaloriesTracker() {
 
   const handleDelete = async (id) => {
     try {
-      await deleteUserCalories(token, id);
+      await deleteUserCalories(id);
       await fetchData();
       toast.success("Activity entry deleted successfully!");
     } catch (err) {
@@ -436,13 +425,13 @@ export default function UserCaloriesTracker() {
     setIsFormCollapsed(false);
   }, [resetForm]);
 
-  const addActivity = () => {
+  const addActivity = (values) => {
     if (
-      !formData.activityName ||
-      (!formData.activityValue && formData.isAutoCalculate) ||
-      (formData.isAutoCalculate && Number(formData.activityValue) <= 0) ||
-      (!formData.isAutoCalculate &&
-        (!formData.manualCalories || Number(formData.manualCalories) <= 0))
+      !values.activityName ||
+      (!values.activityValue && values.isAutoCalculate) ||
+      (values.isAutoCalculate && Number(values.activityValue) <= 0) ||
+      (!values.isAutoCalculate &&
+        (!values.manualCalories || Number(values.manualCalories) <= 0))
     ) {
       // setFormErrors({
       //   activityName: !formData.activityName
@@ -464,7 +453,7 @@ export default function UserCaloriesTracker() {
 
     // Check for duplicate activities
     const isDuplicate = activities.some(
-      (activity) => activity.activity_name === formData.activityName
+      (activity) => activity.activity_name === values.activityName
     );
 
     if (isDuplicate) {
@@ -476,21 +465,21 @@ export default function UserCaloriesTracker() {
 
     const newActivity = {
       id: Date.now(),
-      activity_name: formData.activityName,
-      calories: calculatedCalories.toString(),
-      duration: formData.isAutoCalculate ? formData.activityValue : "",
-      unit: ACTIVITIES[formData.activityName]?.unit || "minutes",
+      activity_name: values.activityName,
+      calories: (values.isAutoCalculate
+        ? calculateCalories(
+            values.activityName,
+            Number(values.activityValue),
+            values.bodyWeight
+          )
+        : Number(values.manualCalories) || 0
+      ).toString(),
+      duration: values.isAutoCalculate ? values.activityValue : "",
+      unit: ACTIVITIES[values.activityName]?.unit || "minutes",
     };
 
     setActivities((prev) => [...prev, newActivity]);
-
-    setFormData((prev) => ({
-      ...prev,
-      activityName: "running",
-      activityValue: "",
-      manualCalories: "",
-    }));
-    // setFormErrors({});
+    // Optionally reset fields using Formik's setFieldValue if needed
   };
 
   const removeActivity = (activityId) => {
@@ -567,28 +556,6 @@ export default function UserCaloriesTracker() {
     }),
     isAutoCalculate: Yup.boolean(),
   });
-
-  // Check if user is authenticated
-  if (!token) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 text-gray-800 p-4 sm:p-6 lg:p-8">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center py-12">
-            <DirectionsRunIcon
-              style={{
-                fontSize: 64,
-                color: "#D1D5DB",
-                margin: "0 auto 1rem auto",
-              }}
-            />
-            <p className="text-gray-500 text-lg">
-              Please log in to access the calorie tracker
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 text-gray-800 p-2 sm:p-4 lg:p-6">
@@ -1022,7 +989,8 @@ export default function UserCaloriesTracker() {
                       {/* Add Activity Button */}
                       <div className="flex items-center justify-center">
                         <Button
-                          onClick={addActivity}
+                          type="button"
+                          onClick={() => addActivity(values)}
                           disabled={
                             (values.isAutoCalculate &&
                               (!values.activityValue ||

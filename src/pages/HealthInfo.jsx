@@ -11,7 +11,7 @@ import {
   Settings,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+
 import * as userApi from "../api/user";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -21,7 +21,7 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 
 export default function HealthInfo() {
-  const { token } = useSelector((state) => state.auth);
+
   const [editMode, setEditMode] = useState(false);
   const [originalForm, setOriginalForm] = useState(null);
   const [mealSummary, setMealSummary] = useState(null);
@@ -33,9 +33,9 @@ export default function HealthInfo() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      if (token) {
+     
         setLoading(true);
-        const userData = await userApi.getUser(token);
+        const userData = await userApi.getUser();
         // Convert from kg/cm to current units
         const userForm = {
           gender: userData.gender || null,
@@ -59,29 +59,29 @@ export default function HealthInfo() {
         setForm(userForm);
         setOriginalForm(userForm);
         setLoading(false);
-      }
+      
     };
     fetchUser();
-  }, [token, units.weight, units.height]);
+  }, [units.weight, units.height]);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (token) {
+    
         try {
           // Fetch meal summary
-          const summary = await getMealSummary(token);
+          const summary = await getMealSummary();
           setMealSummary(summary);
 
           // Fetch user calories (burned calories from activities)
-          const caloriesData = await userCaloriesApi.getUserCalories(token);
+          const caloriesData = await userCaloriesApi.getUserCalories();
           setUserCalories(caloriesData);
         } catch (error) {
           console.error("Error fetching data:", error);
         }
-      }
+    
     };
     fetchData();
-  }, [token]);
+  }, []);
 
   const [form, setForm] = useState({
     gender: null,
@@ -211,15 +211,15 @@ export default function HealthInfo() {
           : null,
       };
 
-      const res = await userApi.updateUser(token, apiValues);
+      const res = await userApi.updateUser(apiValues);
       if (res && !res.detail) {
         toast.success("User info updated successfully.");
         setEditMode(false);
         setOriginalForm(values);
         // Fetch user data again to ensure latest info is present
-        if (token) {
+      
           setLoading(true);
-          const userData = await userApi.getUser(token);
+          const userData = await userApi.getUser();
           const userForm = {
             gender: userData.gender || null,
             age: userData.age || null,
@@ -230,7 +230,7 @@ export default function HealthInfo() {
           setForm(userForm);
           setOriginalForm(userForm);
           setLoading(false);
-        }
+        
       } else {
         toast.error(res?.detail || "Failed to update user info.");
       }
@@ -328,7 +328,6 @@ export default function HealthInfo() {
               >
                 Enter Details
               </button>
-              
             </div>
           </div>
         ) : isMissingRequired && editMode ? (

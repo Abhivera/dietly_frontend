@@ -1,13 +1,8 @@
-// src/api/auth.js
-const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+import axiosInstance from "./axiosInstance";
 
 export async function register(data) {
-  const res = await fetch(`${BASE_URL}/auth/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
+  const res = await axiosInstance.post("/auth/register", data);
+  return res.data;
 }
 
 export async function login({ username, password }) {
@@ -18,73 +13,61 @@ export async function login({ username, password }) {
   params.append("client_id", "string");
   params.append("client_secret", "string");
 
-  const res = await fetch(`${BASE_URL}/auth/login`, {
-    method: "POST",
+  const res = await axiosInstance.post("/auth/login", params, {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: params,
   });
-  return res.json();
+  return res.data;
 }
 
 export async function passwordResetRequest(email) {
-  const res = await fetch(`${BASE_URL}/auth/password-reset-request`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
+  const res = await axiosInstance.post("/auth/password-reset-request", {
+    email,
   });
-  return res.json();
+  return res.data;
 }
 
 export async function passwordResetConfirm(token, new_password) {
-  const res = await fetch(`${BASE_URL}/auth/password-reset-confirm`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ token, new_password }),
+  const res = await axiosInstance.post("/auth/password-reset-confirm", {
+    token,
+    new_password,
   });
-  return res.json();
+  return res.data;
 }
 
 export async function changePassword(token, current_password, new_password) {
-  const res = await fetch(`${BASE_URL}/auth/change-password`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ current_password, new_password }),
-  });
-  return res.json();
+  const res = await axiosInstance.post(
+    "/auth/change-password",
+    { current_password, new_password },
+    {
+      headers: {
+        // Authorization header is handled by interceptor
+      },
+    }
+  );
+  return res.data;
 }
 
-export async function getCurrentUser(token) {
-  const res = await fetch(`${BASE_URL}/auth/me`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.json();
+export async function getCurrentUser() {
+  const res = await axiosInstance.get("/auth/me");
+  return res.data;
 }
 
 export async function verifyEmail(querytoken) {
-  const res = await fetch(`${BASE_URL}/auth/verify-email?token=${querytoken}`);
-  return res.json();
+  const res = await axiosInstance.get(`/auth/verify-email?token=${querytoken}`);
+  return res.data;
 }
 
 export async function googleLogin() {
-  // This endpoint returns a URL or redirects, so we just fetch the URL
-  const res = await fetch(`${BASE_URL}/auth/google/login`, {
-    method: "GET",
-    credentials: "include",
+  const res = await axiosInstance.get("/auth/google/login", {
+    withCredentials: true,
   });
-  return res.json();
+  return res.data;
 }
 
 export async function googleCallback(queryString) {
-  // This endpoint is called after Google redirects back
-  const res = await fetch(
-    `${BASE_URL}/auth/google/callback${queryString || ""}`,
-    {
-      method: "GET",
-      credentials: "include",
-    }
+  const res = await axiosInstance.get(
+    `/auth/google/callback${queryString || ""}`,
+    { withCredentials: true }
   );
-  return res.json();
+  return res.data;
 }
