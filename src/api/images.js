@@ -1,4 +1,5 @@
 import axiosInstance from "./axiosInstance";
+import { getApiUrl } from "@/config/api";
 
 export async function uploadAndAnalyzeImage(file, description) {
   const formData = new FormData();
@@ -43,4 +44,21 @@ export async function updateImageIsMeal(image_id, is_meal) {
     is_meal,
   });
   return res.data;
+}
+
+export async function publicAnalyzeFood(file, description) {
+  const formData = new FormData();
+  formData.append("file", file);
+  if (description) {
+    formData.append("description", description);
+  }
+  const res = await fetch(getApiUrl("/public/analyze-food"), {
+    method: "POST",
+    body: formData,
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.message || "Public food analysis failed");
+  }
+  return data;
 }

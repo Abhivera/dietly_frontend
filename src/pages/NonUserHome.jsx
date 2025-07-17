@@ -27,18 +27,17 @@ import {
   BarChart,
   Dumbbell,
   LineChart,
-  Upload
+  Upload,
 } from "lucide-react";
+import { publicAnalyzeFood } from "@/api/images";
 
-const  NonUserHome = () => {
-  
+const NonUserHome = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [rateLimit, setRateLimit] = useState(null);
   const [description, setDescription] = useState("");
-
 
   const showToast = (message, type = "info") => {
     // Simple toast notification
@@ -58,6 +57,21 @@ const  NonUserHome = () => {
   const handleImageSelect = (event) => {
     const file = event.target.files?.[0];
     if (file) {
+      const allowedTypes = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+        "image/svg+xml",
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        showToast(
+          "Only image files (jpg, png, gif, webp, bmp, svg) are allowed",
+          "error"
+        );
+        return;
+      }
       if (file.size > 10 * 1024 * 1024) {
         showToast("Image size should be less than 10MB", "error");
         return;
@@ -81,23 +95,7 @@ const  NonUserHome = () => {
     setIsAnalyzing(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", selectedImage);
-      formData.append("description", description); // send description
-
-      const response = await fetch(
-        "https://dietly-backend.onrender.com/api/v1/public/analyze-food",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await publicAnalyzeFood(selectedImage, description);
 
       if (data.success) {
         setAnalysis(data.analysis);
@@ -126,13 +124,13 @@ const  NonUserHome = () => {
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-2">
         <div className="text-center mb-2 sm:mb-2">
-          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium mb-6 animate-pulse">
-            <Pizza className="w-4 h-4" />
+          <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+            <Pizza className="w-4 h-4 animate-bounce" />
             Your Personalised Calorie Tracker
           </div>
         </div>
         <div className="text-center mb-2">
-        <div className="text-center pb-2">
+          <div className="text-center pb-2">
             <h2 className="federo-font  text-emerald-800 text-4xl font-bold mb-4">
               Why Choose Dietly?
             </h2>
@@ -141,20 +139,23 @@ const  NonUserHome = () => {
               comprehensive reporting
             </p>
           </div>
+        </div>
 
-          <div className="flex flex-wrap justify-center gap-4 mb-2">
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
-              <Apple size={16} /> Instant Recognition
-            </Badge>
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
-              <BarChart size={16} /> Smart Tracking
-            </Badge>
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
-              <Dumbbell size={16} /> Workout Plans
-            </Badge>
-            <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
-              <LineChart size={16} /> Progress Reports
-            </Badge>
+        <div className="w-full mt-4 text-emerald-700 px-4 sm:px-8">
+          <div className="text-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                asChild
+                size="lg"
+                variant="secondary"
+                className="bg-emerald-600 text-white hover:bg-emerald-300 font-semibold px-8 py-4 rounded-xl transition-all transform hover:scale-105"
+              >
+                <a href="/register">
+                  <User className="w-5 h-5 mr-2" />
+                  Sign Up for Free
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -391,12 +392,22 @@ const  NonUserHome = () => {
             )}
           </CardContent>
         </Card>
-
-       
+        <div className="flex flex-wrap justify-center gap-4 mb-2">
+          <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+            <Apple size={16} /> Instant Recognition
+          </Badge>
+          <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+            <BarChart size={16} /> Smart Tracking
+          </Badge>
+          <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+            <Dumbbell size={16} /> Workout Plans
+          </Badge>
+          <Badge className="bg-transparent border-none text-emerald-800 px-4 shadow-none flex items-center gap-2">
+            <LineChart size={16} /> Progress Reports
+          </Badge>
+        </div>
 
         <div className="mt-2 bg-white bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-     
-
           <div className="px-4 sm:px-8  bg-white text-gray-800">
             {/* Premium Features Highlight */}
             <div className="mt-6 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-2xl p-8 border border-emerald-200">
@@ -470,7 +481,6 @@ const  NonUserHome = () => {
                 </div>
               </div>
             </div>
-    
           </div>
         </div>
 
